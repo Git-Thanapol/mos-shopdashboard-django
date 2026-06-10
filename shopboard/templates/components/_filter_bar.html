@@ -1,6 +1,17 @@
 {# Global filter bar (UX plan §4.1) — GET form, state lives in the URL #}
 <form method="get" class="card filter-bar" x-data="{adv: {{ f.advanced_count|yesno:'true,false' }}}">
     <div class="filter-row">
+        {% if daily_day %}
+        {# daily report: navigate by single day — the from/to range rides along hidden #}
+        <input type="hidden" name="from" value="{{ f.date_from|date:'Y-m-d' }}">
+        <input type="hidden" name="to" value="{{ f.date_to|date:'Y-m-d' }}">
+        <div class="filter-group day-controls">
+            <a class="btn btn-secondary btn-sm" href="?{{ f.querystring }}&date={{ daily_prev|date:'Y-m-d' }}">◀</a>
+            <input class="input input-sm" type="date" name="date" value="{{ daily_day|date:'Y-m-d' }}" onchange="this.form.submit()">
+            <a class="btn btn-secondary btn-sm" href="?{{ f.querystring }}&date={{ daily_next|date:'Y-m-d' }}">▶</a>
+            <span class="hint">{{ daily_label }}</span>
+        </div>
+        {% else %}
         <div class="filter-group">
             {% for label, p_from, p_to in f.presets %}
             <button type="submit" name="from" value="{{ p_from|date:'Y-m-d' }}"
@@ -11,6 +22,7 @@
         <input class="input input-sm" type="date" name="from" value="{{ f.date_from|date:'Y-m-d' }}">
         <span class="hint">ถึง</span>
         <input class="input input-sm" type="date" name="to" value="{{ f.date_to|date:'Y-m-d' }}">
+        {% endif %}
 
         <div class="filter-group" x-data="{open: false}" @click.outside="open = false">
             <button type="button" class="input input-sm dd-toggle" @click="open = !open">
@@ -48,7 +60,7 @@
             ⚙️ ตัวกรองขั้นสูง{% if f.advanced_count %} • {{ f.advanced_count }}{% endif %} ▾
         </button>
         <button class="btn btn-primary btn-sm" type="submit">แสดงผล</button>
-        <a class="btn-link" href="?from={{ f.date_from|date:'Y-m-d' }}&to={{ f.date_to|date:'Y-m-d' }}&mode=moving">ล้างตัวกรอง</a>
+        <a class="btn-link" href="?from={{ f.date_from|date:'Y-m-d' }}&to={{ f.date_to|date:'Y-m-d' }}&mode=moving{% if daily_day %}&date={{ daily_day|date:'Y-m-d' }}{% endif %}">ล้างตัวกรอง</a>
     </div>
 
     <div class="filter-row adv-row" x-show="adv" x-cloak>

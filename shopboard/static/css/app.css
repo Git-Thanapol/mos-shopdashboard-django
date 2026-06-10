@@ -456,7 +456,11 @@ a { color: var(--accent); text-decoration: none; }
 body:has(.test-banner) .filter-bar { top: 81px; }
 .filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .adv-row { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
-.filter-group { position: relative; display: flex; gap: 4px; }
+.filter-group { position: relative; display: flex; gap: 4px; align-items: center; }
+/* inside the filter bar, inputs size to content — .input's width:100% is for stacked forms */
+.filter-bar .input { width: auto; }
+.filter-bar input[type="date"] { width: 140px; }
+.filter-bar .dd-panel .input { width: 100%; }
 .preset-chip { background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim); border-radius: 99px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: var(--font-body); }
 .preset-chip:hover { color: var(--accent); border-color: var(--accent); }
 .dd-toggle { cursor: pointer; text-align: left; white-space: nowrap; width: auto; }

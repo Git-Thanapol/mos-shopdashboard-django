@@ -4,21 +4,11 @@
 {% block title %}รายงานรายวัน — Shop Dashboard{% endblock %}
 
 {% block content %}
-<div class="page-header day-nav">
+<div class="page-header">
     <h1>📅 รายงานรายวัน</h1>
-    <div class="day-controls">
-        <a class="btn btn-secondary btn-sm" href="?{{ f.querystring }}&date={{ prev_day|date:'Y-m-d' }}">◀</a>
-        <form method="get" class="inline-form">
-            <input type="hidden" name="from" value="{{ f.date_from|date:'Y-m-d' }}">
-            <input type="hidden" name="to" value="{{ f.date_to|date:'Y-m-d' }}">
-            <input class="input input-sm" type="date" name="date" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()">
-        </form>
-        <a class="btn btn-secondary btn-sm" href="?{{ f.querystring }}&date={{ next_day|date:'Y-m-d' }}">▶</a>
-        <span class="hint">{{ day_label }}</span>
-    </div>
 </div>
 
-{% include "components/_filter_bar.html" %}
+{% include "components/_filter_bar.html" with daily_day=day daily_prev=prev_day daily_next=next_day daily_label=day_label %}
 {% include "components/_kpi_row.html" %}
 
 <div class="grid-toolbar">
