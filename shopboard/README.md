@@ -18,6 +18,11 @@ docker compose up -d --build
   In dev the OTP email is printed in `docker compose logs web` (console backend).
 - Set `DJANGO_DEBUG=0` + `DJANGO_SETTINGS_MODULE=config.settings.prod` for gunicorn/prod.
 
+## Production deployment (Ubuntu + nginx + gunicorn)
+
+See **[DEPLOY.md](DEPLOY.md)** — one-command provisioning via `deploy/setup_ubuntu.sh`,
+updates via `deploy/deploy.sh`, systemd unit and nginx site in `deploy/`.
+
 ## One-off legacy data import
 
 The compose file mounts `../shop_dashboard_Streamlit_Sample/local_data` at `/legacy_data`:
