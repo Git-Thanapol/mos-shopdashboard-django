@@ -173,6 +173,18 @@ def per_day_sku_net(channel, f, ids, skus) -> dict[tuple, float]:
     return {(r["date"], r["sku_root"]): float(r["net"]) for r in rows}
 
 
+def per_day_sku_ads(channel, f, ids, skus) -> dict[tuple, float]:
+    rows = _rows(
+        """
+        SELECT date, sku_root, SUM(ads_amount) AS v FROM analytics_fact_daily
+        WHERE channel = %s AND date BETWEEN %s AND %s AND shop_id = ANY(%s) AND sku_root = ANY(%s)
+        GROUP BY date, sku_root
+        """,
+        [channel, f.date_from, f.date_to, ids, skus],
+    )
+    return {(r["date"], r["sku_root"]): float(r["v"]) for r in rows}
+
+
 def per_sku(channel, f, ids, skus, day: date | None = None) -> list[dict]:
     d_from, d_to = (day, day) if day else (f.date_from, f.date_to)
     return _rows(

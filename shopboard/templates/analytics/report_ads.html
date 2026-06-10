@@ -4,31 +4,14 @@
 {% block title %}รายงานค่าโฆษณา — Shop Dashboard{% endblock %}
 
 {% block content %}
-<div class="page-header"><h1>📢 รายงานค่าโฆษณา</h1></div>
+<div class="page-header"><h1>📢 สรุปค่าโฆษณา (รายวัน)</h1></div>
 
 {% include "components/_filter_bar.html" %}
-
-<div class="kpi-row kpi-row-4">
-    <div class="kpi-card" style="--kpi: var(--c-ads)">
-        <span class="kpi-label">ค่าแอดรวม</span>
-        <span class="kpi-value">{{ total_ads|money }}</span>
-    </div>
-    <div class="kpi-card" style="--kpi: var(--c-sales)">
-        <span class="kpi-label">ยอดขายรวม</span>
-        <span class="kpi-value">{{ kpi.revenue|money }}</span>
-    </div>
-    <div class="kpi-card" style="--kpi: var(--c-profit)">
-        <span class="kpi-label">ROAS เฉลี่ย</span>
-        <span class="kpi-value">{{ avg_roas|money2 }}</span>
-    </div>
-    <div class="kpi-card" style="--kpi: var(--c-com)">
-        <span class="kpi-label">จำนวนแคมเปญ</span>
-        <span class="kpi-value">{{ n_campaigns|money }}</span>
-    </div>
-</div>
+{% include "components/_kpi_row.html" %}
 
 <div class="tab-bar">
-    <a class="tab {% if tab != 'campaign' %}active{% endif %}" href="?{{ f.querystring }}&tab=sku">ราย SKU</a>
+    <a class="tab {% if tab == 'day' %}active{% endif %}" href="?{{ f.querystring }}&tab=day">รายวัน × สินค้า</a>
+    <a class="tab {% if tab == 'sku' %}active{% endif %}" href="?{{ f.querystring }}&tab=sku">สรุปราย SKU</a>
     <a class="tab {% if tab == 'campaign' %}active{% endif %}" href="?{{ f.querystring }}&tab=campaign">รายแคมเปญ</a>
 </div>
 
@@ -38,12 +21,18 @@
 </div>
 <div id="grid-campaigns" class="ag-theme-quartz-dark legacy-grid grid-box"></div>
 {{ campaign_grid_json|json_script:"grid-campaigns-data" }}
-{% else %}
+{% elif tab == 'sku' %}
 <div class="grid-toolbar">
     <button id="grid-ads-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
 <div id="grid-ads" class="ag-theme-quartz-dark legacy-grid grid-box"></div>
 {{ grid_json|json_script:"grid-ads-data" }}
+{% else %}
+<div class="grid-toolbar">
+    <button id="grid-ads-matrix-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
+</div>
+<div id="grid-ads-matrix" class="ag-theme-quartz-dark legacy-grid grid-box"></div>
+{{ matrix_grid_json|json_script:"grid-ads-matrix-data" }}
 {% endif %}
 {% endblock %}
 
@@ -51,8 +40,10 @@
 <script>
 {% if tab == 'campaign' %}
 initReportGrid("grid-campaigns", "grid-campaigns-data", { exportName: "ads-campaigns" });
+{% elif tab == 'sku' %}
+initReportGrid("grid-ads", "grid-ads-data", { exportName: "ads-by-sku" });
 {% else %}
-initReportGrid("grid-ads", "grid-ads-data", { exportName: "report-ads" });
+initReportGrid("grid-ads-matrix", "grid-ads-matrix-data", { twoLine: true, exportName: "ads-daily" });
 {% endif %}
 </script>
 {% endblock %}

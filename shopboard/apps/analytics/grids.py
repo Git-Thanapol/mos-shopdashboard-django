@@ -134,6 +134,44 @@ def daily_grid(rows, kpi) -> dict:
     return {"columns": DAILY_COLUMNS, "rows": [map_row(r) for r in rows], "footer": footer}
 
 
+def ads_matrix_grid(f, skus, names, cell) -> dict:
+    """Legacy ads layout (report_ads.py:105-154): day rows × SKU columns,
+    pinned orange ค่าแอดรวม column, navy รวม footer in #FF6633."""
+    keys = {s: f"k{i}" for i, s in enumerate(skus)}
+    columns = [
+        {"field": "date", "header": "วันที่", "type": "text", "hdr": "slate", "pinned": True, "width": 120, "sortText": True},
+        {"field": "ads", "header": "ค่าแอดรวม", "type": "money", "hdr": "orange", "pinned": True, "width": 100, "color": "ads"},
+    ]
+    for s in skus:
+        columns.append({
+            "field": keys[s], "header": s, "sub": names.get(s, ""),
+            "type": "money", "hdr": "blue", "width": 100,
+            "color": "ads", "posOnly": True,  # legacy: orange only when > 0
+        })
+
+    rows = []
+    sku_totals = dict.fromkeys(skus, 0.0)
+    d = f.date_from
+    while d <= f.date_to:
+        row = {"date": f"{THAI_WD[d.weekday()]} {d:%d/%m/%y}"}
+        day_total = 0.0
+        for s in skus:
+            v = cell.get((d, s), 0.0)
+            row[keys[s]] = v
+            day_total += v
+            sku_totals[s] += v
+        row["ads"] = day_total
+        rows.append(row)
+        d += timedelta(days=1)
+
+    footer = [{
+        "rtype": "total", "date": "รวม",
+        "ads": sum(sku_totals.values()),
+        **{keys[s]: sku_totals[s] for s in skus},
+    }]
+    return {"columns": columns, "rows": rows, "footer": footer}
+
+
 def ads_sku_grid(rows, total_ads, total_rev, avg_roas, total_net) -> dict:
     columns = [
         {"field": "sku", "header": "SKU", "type": "text", "hdr": "slate", "pinned": True, "width": 130, "link": True, "sortText": True},

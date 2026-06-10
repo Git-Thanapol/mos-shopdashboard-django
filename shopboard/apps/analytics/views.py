@@ -191,6 +191,7 @@ def report_ads(request):
     master_skus = set(MasterItem.objects.filter(channel=channel).values_list("sku", flat=True))
     avg_roas = total_rev / total_ads if total_ads else 0
     total_net = sum(r["net_profit"] for r in rows)
+    ads_cell = queries.per_day_sku_ads(channel, f, ids, ctx["skus"] or [""])
     ctx.update(
         rows=rows,
         kpi=queries.kpis(channel, f, ids, skus or [""]),
@@ -199,7 +200,8 @@ def report_ads(request):
         campaigns=campaigns,
         n_campaigns=len({c["campaign_name"] for c in campaigns}),
         master_skus=master_skus,
-        tab=request.GET.get("tab", "sku"),
+        tab=request.GET.get("tab", "day"),
+        matrix_grid_json=grids.ads_matrix_grid(f, ctx["skus"], ctx["names"], ads_cell),
         grid_json=grids.ads_sku_grid(rows, total_ads, total_rev, avg_roas, total_net),
         campaign_grid_json=grids.ads_campaign_grid(campaigns, master_skus),
     )

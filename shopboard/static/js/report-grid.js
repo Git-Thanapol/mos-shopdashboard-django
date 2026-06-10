@@ -93,7 +93,9 @@
                 else if (pinnedTotal && c.color === "ads") cls.push("agx-foot-ads");
                 else if (!p.node.rowPinned) {
                     if (c.posGreen && typeof p.value === "number" && p.value > 0) cls.push("agx-pos");
-                    else if (c.color) cls.push("agx-c-" + c.color);
+                    else if (c.color && (!c.posOnly || (typeof p.value === "number" && p.value > 0))) {
+                        cls.push("agx-c-" + c.color);
+                    }
                 }
                 return cls;
             },
