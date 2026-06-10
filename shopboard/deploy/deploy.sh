@@ -20,7 +20,12 @@ manage() {
 
 if [ -d "$APP_DIR/.git" ]; then
     echo "==> git pull"
-    sudo -u shopboard git -C "$APP_DIR" pull --ff-only
+    # pull as root (mixed file ownership otherwise trips git's dubious-ownership
+    # check), then hand everything back to the service user
+    git config --global --get-all safe.directory 2>/dev/null | grep -qx "$APP_DIR" \
+        || git config --global --add safe.directory "$APP_DIR"
+    git -C "$APP_DIR" pull --ff-only
+    chown -R shopboard:www-data "$APP_DIR"
 else
     echo "==> no git repo at $APP_DIR — assuming code was uploaded manually (rsync/scp)"
 fi
