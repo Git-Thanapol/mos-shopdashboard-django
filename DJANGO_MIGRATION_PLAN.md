@@ -414,3 +414,17 @@ and **TEST** (products being trialed, not actually sold in the store yet).
 - Feature gating: Google Sheet master import is LIVE-only (TEST products are hand-registered).
   FixCost / fixed-cost P&L lines are LIVE-only.
 - `import_legacy`: all existing shops/files/master rows → LIVE.
+
+## 14. ADDENDUM (2026-06-10): legacy percent double-division bug — FIXED in shopboard
+
+Discovered during the phase-4 parity check. The master Google Sheet / xlsx stores percent
+columns as STRINGS like `'4.00%'` (commissions, courier COD %). Legacy `safe_float('4.00%')`
+returns `0.04`, and the commission/COD formulas then divide by 100 AGAIN — so the Streamlit
+app under-counted commission and COD costs by ×100 (sample period: commissions ฿257 instead
+of ฿25,742; COD ฿545 instead of ฿54,501; net profit overstated by ~฿95,841 / ~8%).
+
+The new system interprets `'4.00%'` as 4 percent (import strips `%`, stores `4.00`, SQL divides
+by 100 once). Parity proven exact (max diff 0.000000 on all 1,021 daily rows × 11 measures)
+after correcting the legacy reference for this one bug — see `shopboard/scripts/parity_check.py`
+(`safe_float_pct`). When the owner compares old vs new reports, commissions/COD/net profit WILL
+differ — that difference is the bug fix, not a porting error.

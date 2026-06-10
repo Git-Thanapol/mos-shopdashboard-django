@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from apps.analytics.facts import refresh_facts
 from apps.core import channels
 from apps.core.decorators import channel_required
 
@@ -71,6 +72,7 @@ def master_create(request):
             item.channel = channel
             item.updated_by = request.user
             item.save()
+            refresh_facts()
             messages.success(request, f"เพิ่มสินค้า {item.sku} แล้ว")
     else:
         messages.error(request, "ข้อมูลไม่ถูกต้อง: " + "; ".join(f"{k}: {v[0]}" for k, v in form.errors.items()))
@@ -86,6 +88,7 @@ def master_edit(request, pk):
             obj = form.save(commit=False)
             obj.updated_by = request.user
             obj.save()
+            refresh_facts()
             return render(request, "catalog/_master_row.html", {"item": obj})
         return render(request, "catalog/_master_row_edit.html", {"item": item, "form": form})
     return render(request, "catalog/_master_row_edit.html", {"item": item, "form": MasterItemForm(instance=item)})
@@ -102,6 +105,7 @@ def master_row(request, pk):
 def master_delete(request, pk):
     item = get_object_or_404(MasterItem, pk=pk, channel=channels.current(request))
     item.delete()
+    refresh_facts()
     return HttpResponse("")  # htmx removes the row
 
 
@@ -114,6 +118,7 @@ def master_import_xlsx(request):
         return redirect("catalog:master_items")
     try:
         result = importer.import_master_xlsx(file, channels.current(request), request.user)
+        refresh_facts()
         messages.success(
             request,
             f"นำเข้าสำเร็จ: เพิ่ม {result['added']} แก้ไข {result['updated']} ข้าม {result['skipped']} รายการ",
@@ -131,6 +136,7 @@ def master_import_sheet(request):
         return redirect("catalog:master_items")
     try:
         result = importer.import_master_google_sheet(request.user)
+        refresh_facts()
         messages.success(
             request,
             f"นำเข้าจาก Google Sheet สำเร็จ: เพิ่ม {result['added']} แก้ไข {result['updated']} รายการ",
