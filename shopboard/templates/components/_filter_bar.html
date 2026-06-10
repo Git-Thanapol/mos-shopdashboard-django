@@ -19,9 +19,11 @@
                     class="preset-chip">{{ label }}</button>
             {% endfor %}
         </div>
+        <br>
         <div class="filter-group date-range">
+            <p class="hint">เริ่ม</p>
             <input class="input input-sm" type="date" name="from" value="{{ f.date_from|date:'Y-m-d' }}">
-            <span class="hint">ถึง</span>
+            <p class="hint">ถึง</p>
             <input class="input input-sm" type="date" name="to" value="{{ f.date_to|date:'Y-m-d' }}">
         </div>
         {% endif %}
