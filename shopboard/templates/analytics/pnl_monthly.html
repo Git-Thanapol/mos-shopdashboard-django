@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load fmt %}
+
+{% block title %}งบกำไรขาดทุน (เดือน) — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header day-nav">
+    <h1>📅 งบกำไรขาดทุน (รายเดือน)</h1>
+    <form method="get" class="inline-form">
+        <select class="input input-sm" name="month" onchange="this.form.submit()">
+            {% for num, label in months %}<option value="{{ num }}" {% if num == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <select class="input input-sm" name="year" onchange="this.form.submit()">
+            {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }} (พ.ศ. {{ y|add:543 }})</option>{% endfor %}
+        </select>
+    </form>
+</div>
+
+{% if row %}
+<div class="card table-card">
+    <div class="table-scroll">
+        {% include "analytics/_pnl_table.html" %}
+    </div>
+</div>
+
+{% if not is_test_channel %}
+<div class="card fixcost-card">
+    <h2 class="pane-title">ค่าใช้จ่ายคงที่ {{ month_label }} {{ year|add:543 }}</h2>
+    <table class="data-table">
+        <thead><tr><th>รายการ</th><th class="num">จำนวนเงิน</th></tr></thead>
+        <tbody>
+            {% for fc in fixcosts %}
+            <tr><td>{{ fc.label }}</td><td class="num">{{ fc.amount|money2 }}</td></tr>
+            {% empty %}
+            <tr><td colspan="2" class="empty-cell">ยังไม่มีค่าใช้จ่ายคงที่เดือนนี้ — เพิ่มได้ใน <a href="/admin/catalog/fixcost/">Django Admin</a></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state"><div class="empty-icon">📭</div><p>ไม่มีข้อมูล {{ month_label }} {{ year|add:543 }}</p></div>
+{% endif %}
+{% endblock %}

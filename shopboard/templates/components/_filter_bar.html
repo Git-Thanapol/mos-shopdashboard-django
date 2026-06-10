@@ -1,0 +1,80 @@
+{# Global filter bar (UX plan §4.1) — GET form, state lives in the URL #}
+<form method="get" class="card filter-bar" x-data="{adv: {{ f.advanced_count|yesno:'true,false' }}}">
+    <div class="filter-row">
+        <div class="filter-group">
+            {% for label, p_from, p_to in f.presets %}
+            <button type="submit" name="from" value="{{ p_from|date:'Y-m-d' }}"
+                    onclick="this.form.to.value='{{ p_to|date:'Y-m-d' }}'"
+                    class="preset-chip">{{ label }}</button>
+            {% endfor %}
+        </div>
+        <input class="input input-sm" type="date" name="from" value="{{ f.date_from|date:'Y-m-d' }}">
+        <span class="hint">ถึง</span>
+        <input class="input input-sm" type="date" name="to" value="{{ f.date_to|date:'Y-m-d' }}">
+
+        <div class="filter-group" x-data="{open: false}" @click.outside="open = false">
+            <button type="button" class="input input-sm dd-toggle" @click="open = !open">
+                🏪 ร้านค้า: {% if f.shops %}{{ f.shops|length }} ร้าน{% else %}ทั้งหมด{% endif %} ▾
+            </button>
+            <div class="dd-panel" x-show="open" x-cloak>
+                {% for s in all_shops %}
+                <label class="check-label">
+                    <input type="checkbox" name="shop" value="{{ s.name }}"
+                           {% if s.name in f.shops %}checked{% endif %}> {{ s.name }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="filter-group" x-data="{open: false, q: ''}" @click.outside="open = false">
+            <button type="button" class="input input-sm dd-toggle" @click="open = !open">
+                🔍 SKU: {% if f.skus %}{{ f.skus|length }} รายการ{% else %}อัตโนมัติ{% endif %} ▾
+            </button>
+            <div class="dd-panel dd-panel-wide" x-show="open" x-cloak>
+                <input class="input input-sm" type="search" placeholder="พิมพ์เพื่อค้นหา..." x-model="q">
+                <div class="dd-list">
+                    {% for s in skus_all %}
+                    <label class="check-label" x-show="q === '' || $el.textContent.toLowerCase().includes(q.toLowerCase())">
+                        <input type="checkbox" name="sku" value="{{ s.0 }}"
+                               {% if s.0 in f.skus %}checked{% endif %}>
+                        <span class="mono">{{ s.0 }}</span>&nbsp;{{ s.1|truncatechars:35 }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="input input-sm dd-toggle" @click="adv = !adv">
+            ⚙️ ตัวกรองขั้นสูง{% if f.advanced_count %} • {{ f.advanced_count }}{% endif %} ▾
+        </button>
+        <button class="btn btn-primary btn-sm" type="submit">แสดงผล</button>
+        <a class="btn-link" href="?from={{ f.date_from|date:'Y-m-d' }}&to={{ f.date_to|date:'Y-m-d' }}&mode=moving">ล้างตัวกรอง</a>
+    </div>
+
+    <div class="filter-row adv-row" x-show="adv" x-cloak>
+        <select class="input input-sm" name="cat">
+            <option value="">ทุกหมวดหมู่</option>
+            {% for c in categories %}<option value="{{ c }}" {% if c == f.category %}selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+        <select class="input input-sm" name="tag">
+            <option value="">ทุกแท็ก</option>
+            {% for g in tag_groups %}
+                {% for t in g.tags.all %}
+                <option value="{{ t.pk }}" {% if t.pk == f.tag %}selected{% endif %}>{{ g.name }} / {{ t.name }}</option>
+                {% endfor %}
+            {% endfor %}
+        </select>
+        <select class="input input-sm" name="mode">
+            <option value="moving" {% if f.mode == "moving" %}selected{% endif %}>มีการเคลื่อนไหว</option>
+            <option value="profit" {% if f.mode == "profit" %}selected{% endif %}>เฉพาะกำไร</option>
+            <option value="loss" {% if f.mode == "loss" %}selected{% endif %}>เฉพาะขาดทุน</option>
+            <option value="all" {% if f.mode == "all" %}selected{% endif %}>ทั้งหมด</option>
+        </select>
+        <span class="hint">%กำไร</span>
+        <input class="input input-sm num-narrow" type="number" step="any" name="pmin" value="{{ f.pmin|default_if_none:'' }}" placeholder="ต่ำสุด">
+        <input class="input input-sm num-narrow" type="number" step="any" name="pmax" value="{{ f.pmax|default_if_none:'' }}" placeholder="สูงสุด">
+        <span class="hint">%แอด</span>
+        <input class="input input-sm num-narrow" type="number" step="any" name="amin" value="{{ f.amin|default_if_none:'' }}" placeholder="ต่ำสุด">
+        <input class="input input-sm num-narrow" type="number" step="any" name="amax" value="{{ f.amax|default_if_none:'' }}" placeholder="สูงสุด">
+    </div>
+</form>

@@ -1,0 +1,58 @@
+{% load fmt %}
+<table class="data-table pnl-table">
+    <thead>
+        <tr>
+            <th>รายการ</th>
+            {% for r in table %}<th class="num">{{ r.month_label }}</th>{% endfor %}
+            {% if table|length > 1 %}<th class="num">รวม</th>{% endif %}
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>รายได้จากการขาย</td>
+            {% for r in table %}<td class="num" style="color: var(--c-sales)">{{ r.revenue|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num" style="color: var(--c-sales)">{{ total.revenue|money }}</td>{% endif %}
+        </tr>
+        <tr><td>หัก ทุนสินค้า</td>
+            {% for r in table %}<td class="num">{{ r.product_cost|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.product_cost|money }}</td>{% endif %}
+        </tr>
+        <tr class="pnl-sub"><td>กำไรขั้นต้น</td>
+            {% for r in table %}<td class="num">{{ r.gross|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.gross|money }}</td>{% endif %}
+        </tr>
+        <tr><td>หัก ค่ากล่อง</td>
+            {% for r in table %}<td class="num">{{ r.box_cost|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.box_cost|money }}</td>{% endif %}
+        </tr>
+        <tr><td>หัก ค่าขนส่ง</td>
+            {% for r in table %}<td class="num">{{ r.delivery_cost|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.delivery_cost|money }}</td>{% endif %}
+        </tr>
+        <tr><td>หัก ค่า COD</td>
+            {% for r in table %}<td class="num">{{ r.cod_cost|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.cod_cost|money }}</td>{% endif %}
+        </tr>
+        <tr><td>หัก ค่าคอมมิชชั่น Admin</td>
+            {% for r in table %}<td class="num">{{ r.com_admin|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.com_admin|money }}</td>{% endif %}
+        </tr>
+        <tr><td>หัก ค่าคอมมิชชั่น Telesale</td>
+            {% for r in table %}<td class="num">{{ r.com_tele|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.com_tele|money }}</td>{% endif %}
+        </tr>
+        <tr><td>หัก ค่าโฆษณา</td>
+            {% for r in table %}<td class="num" style="color: var(--c-ads)">{{ r.ads_amount|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num" style="color: var(--c-ads)">{{ total.ads_amount|money }}</td>{% endif %}
+        </tr>
+        {% if not is_test_channel %}
+        <tr><td>หัก ค่าใช้จ่ายคงที่</td>
+            {% for r in table %}<td class="num">{{ r.fix_cost|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num">{{ total.fix_cost|money }}</td>{% endif %}
+        </tr>
+        {% endif %}
+        <tr class="total-row"><td>กำไรสุทธิ</td>
+            {% for r in table %}<td class="num {{ r.net_after_fix|neg }}">{{ r.net_after_fix|money }}</td>{% endfor %}
+            {% if table|length > 1 %}<td class="num {{ total.net_after_fix|neg }}">{{ total.net_after_fix|money }}</td>{% endif %}
+        </tr>
+    </tbody>
+</table>

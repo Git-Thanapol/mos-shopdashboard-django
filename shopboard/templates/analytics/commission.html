@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load fmt %}
+
+{% block title %}ค่าคอมมิชชั่น — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header"><h1>💰 ค่าคอมมิชชั่น</h1></div>
+
+{% include "components/_filter_bar.html" %}
+
+<div class="kpi-row kpi-row-4">
+    <div class="kpi-card" style="--kpi: var(--c-com)">
+        <span class="kpi-label">รวมค่าคอม Admin</span>
+        <span class="kpi-value">{{ total_admin|money2 }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-com)">
+        <span class="kpi-label">รวมค่าคอม Telesale</span>
+        <span class="kpi-value">{{ total_tele|money2 }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-sales)">
+        <span class="kpi-label">% ของยอดขาย</span>
+        <span class="kpi-value">{{ com_pct|pct }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-ops)">
+        <span class="kpi-label">จำนวนรายการ</span>
+        <span class="kpi-value">{{ rows|length }}</span>
+    </div>
+</div>
+
+<div class="tab-bar">
+    <a class="tab {% if role == 'all' %}active{% endif %}" href="?{{ f.querystring }}&role=all">ทั้งหมด</a>
+    <a class="tab {% if role == 'admin' %}active{% endif %}" href="?{{ f.querystring }}&role=admin">Admin</a>
+    <a class="tab {% if role == 'tele' %}active{% endif %}" href="?{{ f.querystring }}&role=tele">Telesale</a>
+</div>
+
+<div class="card table-card">
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr><th>เดือน</th><th>SKU</th><th>ชื่อสินค้า</th><th class="num">ยอดขาย</th>
+                <th class="num">คอม Admin</th><th class="num">คอม Telesale</th><th class="num">รวม</th></tr>
+        </thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td>{{ r.month_label }} {{ r.year }}</td>
+                <td><a class="mono" href="{% url 'analytics:sku_detail' r.sku_root %}">{{ r.sku_root }}</a></td>
+                <td>{{ r.name|truncatechars:35 }}</td>
+                <td class="num">{{ r.revenue|money }}</td>
+                <td class="num" style="color: var(--c-com)">{{ r.com_admin|money2 }}</td>
+                <td class="num" style="color: var(--c-com)">{{ r.com_tele|money2 }}</td>
+                <td class="num"><strong>{{ r.total|money2 }}</strong></td>
+            </tr>
+            {% empty %}<tr><td colspan="7" class="empty-cell">ไม่มีค่าคอมมิชชั่นในช่วงที่เลือก</td></tr>{% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}

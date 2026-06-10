@@ -1,15 +1,117 @@
 {% extends "base.html" %}
+{% load fmt %}
 
 {% block title %}ภาพรวม — Shop Dashboard{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>ภาพรวม{% if is_test_channel %}สินค้าทดสอบ{% else %}ร้านค้า{% endif %}</h1>
+    <h1>ภาพรวมวันนี้ ({{ today_label }}) <span class="count-badge">เทียบกับเมื่อวาน</span></h1>
 </div>
 
-<div class="empty-state">
-    <div class="empty-icon">🚧</div>
-    <p>แดชบอร์ดอยู่ระหว่างการพัฒนา (Phase 5)</p>
-    <p class="empty-sub">ระบบเข้าสู่ระบบและการแยกช่องทาง ทดสอบ/ขายจริง พร้อมใช้งานแล้ว</p>
+<div class="kpi-row kpi-row-4">
+    <div class="kpi-card" style="--kpi: var(--c-sales)">
+        <span class="kpi-label">ยอดขายวันนี้</span>
+        <span class="kpi-value">{{ k_today.revenue|money }}</span>
+        <span class="kpi-sub">เมื่อวาน {{ k_yda.revenue|money }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-ops)">
+        <span class="kpi-label">ออเดอร์วันนี้</span>
+        <span class="kpi-value">{{ k_today.orders|money }}</span>
+        <span class="kpi-sub">เมื่อวาน {{ k_yda.orders|money }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-ads)">
+        <span class="kpi-label">ค่าแอดวันนี้</span>
+        <span class="kpi-value">{{ k_today.ads_amount|money }}</span>
+        <span class="kpi-sub">เมื่อวาน {{ k_yda.ads_amount|money }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-profit)">
+        <span class="kpi-label">กำไรสุทธิวันนี้</span>
+        <span class="kpi-value {{ k_today.net_profit|neg }}">{{ k_today.net_profit|money }}</span>
+        <span class="kpi-sub">เมื่อวาน {{ k_yda.net_profit|money }}</span>
+    </div>
 </div>
+
+<div class="dash-grid">
+    <div class="card chart-card">
+        <h2 class="pane-title">📈 ยอดขาย & กำไร 30 วันล่าสุด</h2>
+        <div id="chart-30d" class="chart-box"></div>
+    </div>
+    <div class="card">
+        <h2 class="pane-title">⚠️ ต้องดู</h2>
+        <ul class="alert-list">
+            {% if loss_count %}
+            <li><a href="{% url 'analytics:report_monthly' %}?mode=loss">💸 {{ loss_count }} SKU ขาดทุนเดือนนี้ → ดูรายการ</a></li>
+            {% endif %}
+            {% if missing_master_count %}
+            <li>
+                <a href="{% url 'catalog:master_items' %}">🔍 {{ missing_master_count }} SKU มียอดขายแต่ไม่มีใน Master → ตั้งค่าต้นทุน</a>
+                <div class="hint">{{ missing_master|join:", "|truncatechars:120 }}</div>
+            </li>
+            {% endif %}
+            {% if not loss_count and not missing_master_count %}
+            <li class="hint">✅ ไม่มีรายการที่ต้องตรวจสอบ</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<div class="dash-grid">
+    <div class="card table-card">
+        <h2 class="pane-title in-card">🏆 Top 10 สินค้าทำกำไร (เดือนนี้)</h2>
+        <table class="data-table">
+            <thead><tr><th>SKU</th><th>ชื่อสินค้า</th><th class="num">ยอดขาย</th><th class="num">กำไร</th></tr></thead>
+            <tbody>
+                {% for r in top_profit %}
+                <tr>
+                    <td><a href="{% url 'analytics:sku_detail' r.sku_root %}" class="mono">{{ r.sku_root }}</a></td>
+                    <td>{{ r.name|truncatechars:30 }}</td>
+                    <td class="num">{{ r.revenue|money }}</td>
+                    <td class="num" style="color: var(--c-profit)">{{ r.net_profit|money }}</td>
+                </tr>
+                {% empty %}<tr><td colspan="4" class="empty-cell">ไม่มีข้อมูลเดือนนี้</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card table-card">
+        <h2 class="pane-title in-card">💸 Top 10 สินค้าขาดทุน (เดือนนี้)</h2>
+        <table class="data-table">
+            <thead><tr><th>SKU</th><th>ชื่อสินค้า</th><th class="num">ยอดขาย</th><th class="num">ขาดทุน</th></tr></thead>
+            <tbody>
+                {% for r in top_loss %}
+                <tr>
+                    <td><a href="{% url 'analytics:sku_detail' r.sku_root %}" class="mono">{{ r.sku_root }}</a></td>
+                    <td>{{ r.name|truncatechars:30 }}</td>
+                    <td class="num">{{ r.revenue|money }}</td>
+                    <td class="num neg">{{ r.net_profit|money }}</td>
+                </tr>
+                {% empty %}<tr><td colspan="4" class="empty-cell">ไม่มีสินค้าขาดทุน 🎉</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{ chart_json|json_script:"chart-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const data = JSON.parse(document.getElementById("chart-data").textContent);
+    const el = document.getElementById("chart-30d");
+    const chart = echarts.init(el, "dark");
+    chart.setOption({
+        backgroundColor: "transparent",
+        tooltip: { trigger: "axis" },
+        legend: { data: ["ยอดขาย", "กำไรสุทธิ"] },
+        grid: { left: 70, right: 20, top: 40, bottom: 30 },
+        xAxis: { type: "category", data: data.dates },
+        yAxis: { type: "value" },
+        series: [
+            { name: "ยอดขาย", type: "bar", data: data.revenue, itemStyle: { color: "#33FFFF" } },
+            { name: "กำไรสุทธิ", type: "line", smooth: true, data: data.profit, itemStyle: { color: "#7CFC00" } },
+        ],
+    });
+    window.addEventListener("resize", () => chart.resize());
+})();
+</script>
 {% endblock %}

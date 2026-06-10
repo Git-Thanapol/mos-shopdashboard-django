@@ -27,19 +27,19 @@
             <div class="nav-group">
                 <button class="nav-item" @click="open = open === 'reports' ? null : 'reports'">📊 รายงาน ▾</button>
                 <div class="nav-dropdown" x-show="open === 'reports'" x-cloak>
-                    <a href="#">รายงานรายเดือน</a>
-                    <a href="#">รายงานรายวัน</a>
-                    <a href="#">รายงานค่าโฆษณา</a>
-                    <a href="#">กราฟสินค้า</a>
-                    <a href="#">ค่าคอมมิชชั่น</a>
+                    <a href="{% url 'analytics:report_monthly' %}">รายงานภาพรวม (รายเดือน)</a>
+                    <a href="{% url 'analytics:report_daily' %}">รายงานรายวัน</a>
+                    <a href="{% url 'analytics:report_ads' %}">รายงานค่าโฆษณา</a>
+                    <a href="{% url 'analytics:product_graph' %}">กราฟสินค้า</a>
+                    <a href="{% url 'analytics:commission' %}">ค่าคอมมิชชั่น</a>
                 </div>
             </div>
 
             <div class="nav-group">
                 <button class="nav-item" @click="open = open === 'pnl' ? null : 'pnl'">📈 งบกำไรขาดทุน ▾</button>
                 <div class="nav-dropdown" x-show="open === 'pnl'" x-cloak>
-                    <a href="#">รายปี</a>
-                    <a href="#">รายเดือน</a>
+                    <a href="{% url 'analytics:pnl_yearly' %}">รายปี</a>
+                    <a href="{% url 'analytics:pnl_monthly' %}">รายเดือน</a>
                 </div>
             </div>
 

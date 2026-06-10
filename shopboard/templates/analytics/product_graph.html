@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load fmt %}
+
+{% block title %}กราฟสินค้า — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header"><h1>📈 กราฟสินค้า</h1></div>
+
+{% include "components/_filter_bar.html" %}
+
+<div class="tab-bar">
+    {% for value, label in metric_options %}
+    <a class="tab {% if metric == value %}active{% endif %}" href="?{{ f.querystring }}&metric={{ value }}">{{ label }}</a>
+    {% endfor %}
+    {% if capped %}<span class="hint">แสดง 12 SKU แรก (เลือก SKU เองเพื่อเจาะจง)</span>{% endif %}
+</div>
+
+<div class="card chart-card">
+    <h2 class="pane-title">แนวโน้มรายวัน</h2>
+    <div id="chart-trend" class="chart-box chart-tall"></div>
+</div>
+
+<div class="card chart-card">
+    <h2 class="pane-title">ยอดขายรวม + จำนวนชิ้น (ช่วงที่เลือก)</h2>
+    <div id="chart-bar" class="chart-box"></div>
+</div>
+
+{{ graph_json|json_script:"graph-data" }}
+{{ bar_json|json_script:"bar-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const g = JSON.parse(document.getElementById("graph-data").textContent);
+    const trend = echarts.init(document.getElementById("chart-trend"), "dark");
+    trend.setOption({
+        backgroundColor: "transparent",
+        tooltip: { trigger: "axis" },
+        legend: { type: "scroll" },
+        grid: { left: 70, right: 20, top: 40, bottom: 70 },
+        dataZoom: [{ type: "slider" }, { type: "inside" }],
+        xAxis: { type: "category", data: g.dates },
+        yAxis: { type: "value" },
+        series: g.series.map(s => ({ name: s.name, type: "line", smooth: true, data: s.data })),
+    });
+
+    const b = JSON.parse(document.getElementById("bar-data").textContent);
+    const bar = echarts.init(document.getElementById("chart-bar"), "dark");
+    bar.setOption({
+        backgroundColor: "transparent",
+        tooltip: { trigger: "axis" },
+        legend: {},
+        grid: { left: 70, right: 20, top: 40, bottom: 60 },
+        xAxis: { type: "category", data: b.skus, axisLabel: { rotate: 35 } },
+        yAxis: { type: "value" },
+        series: [
+            { name: "ยอดขาย", type: "bar", data: b.revenue, itemStyle: { color: "#33FFFF" } },
+            { name: "จำนวนชิ้น", type: "bar", data: b.quantity, itemStyle: { color: "#3498db" } },
+        ],
+    });
+    window.addEventListener("resize", () => { trend.resize(); bar.resize(); });
+})();
+</script>
+{% endblock %}

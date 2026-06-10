@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load fmt %}
+
+{% block title %}งบกำไรขาดทุน (ปี) — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header day-nav">
+    <h1>📈 งบกำไรขาดทุน (รายปี)</h1>
+    <form method="get" class="inline-form">
+        <select class="input input-sm" name="year" onchange="this.form.submit()">
+            {% for y in years %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }} (พ.ศ. {{ y|add:543 }})</option>{% endfor %}
+        </select>
+    </form>
+</div>
+
+{% if table %}
+<div class="dash-grid">
+    <div class="card chart-card">
+        <h2 class="pane-title">ยอดขาย & กำไรสุทธิรายเดือน</h2>
+        <div id="chart-pnl" class="chart-box"></div>
+    </div>
+    <div class="card chart-card">
+        <h2 class="pane-title">สัดส่วนค่าใช้จ่าย</h2>
+        <div id="chart-donut" class="chart-box"></div>
+    </div>
+</div>
+
+<div class="card table-card">
+    <div class="table-scroll">
+        {% include "analytics/_pnl_table.html" %}
+    </div>
+</div>
+
+{{ chart_json|json_script:"pnl-data" }}
+{{ donut_json|json_script:"donut-data" }}
+{% else %}
+<div class="empty-state"><div class="empty-icon">📭</div><p>ไม่มีข้อมูลปี {{ year }}</p></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if table %}
+<script>
+(function () {
+    const d = JSON.parse(document.getElementById("pnl-data").textContent);
+    const c1 = echarts.init(document.getElementById("chart-pnl"), "dark");
+    c1.setOption({
+        backgroundColor: "transparent",
+        tooltip: { trigger: "axis" },
+        legend: {},
+        grid: { left: 80, right: 20, top: 40, bottom: 30 },
+        xAxis: { type: "category", data: d.months },
+        yAxis: { type: "value" },
+        series: [
+            { name: "ยอดขาย", type: "bar", data: d.revenue, itemStyle: { color: "#33FFFF" } },
+            { name: "กำไรสุทธิ", type: "line", data: d.profit, itemStyle: { color: "#7CFC00" } },
+        ],
+    });
+    const donut = JSON.parse(document.getElementById("donut-data").textContent);
+    const c2 = echarts.init(document.getElementById("chart-donut"), "dark");
+    c2.setOption({
+        backgroundColor: "transparent",
+        tooltip: { trigger: "item", formatter: "{b}: {c} ({d}%)" },
+        legend: { orient: "vertical", left: "left" },
+        series: [{
+            type: "pie", radius: ["45%", "72%"],
+            data: donut,
+            color: ["#A020F0", "#3498db", "#FFD700", "#FF6633", "#9aa3b2"],
+        }],
+    });
+    window.addEventListener("resize", () => { c1.resize(); c2.resize(); });
+})();
+</script>
+{% endif %}
+{% endblock %}

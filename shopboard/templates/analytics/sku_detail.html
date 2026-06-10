@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load fmt %}
+
+{% block title %}{{ sku }} — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><span class="mono">{{ sku }}</span> — {{ name }}</h1>
+    <div>
+        {% for pt in tags %}
+        <span class="tag-chip" style="border-color: {{ pt.tag.color|default:pt.tag.group.color }}">{{ pt.tag.name }}</span>
+        {% endfor %}
+        {% if master %}<span class="count-badge">หมวดหมู่: {{ master.type }}</span>{% endif %}
+    </div>
+</div>
+
+{% include "components/_filter_bar.html" %}
+
+{% if summary %}
+<div class="kpi-row">
+    <div class="kpi-card" style="--kpi: var(--c-sales)">
+        <span class="kpi-label">ยอดขาย</span><span class="kpi-value">{{ summary.revenue|money }}</span>
+        <span class="kpi-sub">{{ summary.orders|money }} ออเดอร์ / {{ summary.quantity|money }} ชิ้น</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-cost)">
+        <span class="kpi-label">ทุนสินค้า</span><span class="kpi-value">{{ summary.product_cost|money }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-ops)">
+        <span class="kpi-label">ค่าดำเนินการ+คอม</span>
+        <span class="kpi-value">{{ summary.other_costs|money }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-ads)">
+        <span class="kpi-label">ค่าแอด</span><span class="kpi-value">{{ summary.ads_amount|money }}</span>
+        <span class="kpi-sub">ROAS {{ summary.roas|money2 }}</span>
+    </div>
+    <div class="kpi-card" style="--kpi: var(--c-profit)">
+        <span class="kpi-label">กำไรสุทธิ</span>
+        <span class="kpi-value {{ summary.net_profit|neg }}">{{ summary.net_profit|money }}</span>
+        <span class="kpi-sub">{{ summary.profit_pct|pct }} ของยอดขาย</span>
+    </div>
+</div>
+{% else %}
+<div class="card"><p class="hint">ไม่มียอดขายในช่วงที่เลือก</p></div>
+{% endif %}
+
+<div class="dash-grid">
+    <div class="card chart-card">
+        <h2 class="pane-title">แนวโน้มยอดขาย & กำไร</h2>
+        <div id="chart-sku" class="chart-box"></div>
+    </div>
+    <div class="card">
+        <h2 class="pane-title">ข้อมูลต้นทุน (Master)</h2>
+        {% if master %}
+        <table class="data-table">
+            <tbody>
+                <tr><td>ต้นทุน</td><td class="num">{{ master.cost|money2 }}</td></tr>
+                <tr><td>ราคากล่อง</td><td class="num">{{ master.box_cost|money2 }}</td></tr>
+                <tr><td>ค่าส่งเฉลี่ย</td><td class="num">{{ master.delivery_cost|money2 }}</td></tr>
+                <tr><td>คอม Admin</td><td class="num">{{ master.com_admin_pct }}%</td></tr>
+                <tr><td>คอม Telesale</td><td class="num">{{ master.com_tele_pct }}%</td></tr>
+            </tbody>
+        </table>
+        <a class="btn-link" href="{% url 'catalog:master_items' %}?q={{ sku }}">แก้ไขใน Master →</a>
+        {% else %}
+        <p class="hint">⚠️ SKU นี้ไม่มีใน Master — ต้นทุนถูกคิดเป็น 0</p>
+        <a class="btn btn-primary btn-sm" href="{% url 'catalog:master_items' %}">ไปเพิ่มใน Master</a>
+        {% endif %}
+    </div>
+</div>
+
+{{ chart_json|json_script:"sku-chart-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const d = JSON.parse(document.getElementById("sku-chart-data").textContent);
+    const c = echarts.init(document.getElementById("chart-sku"), "dark");
+    c.setOption({
+        backgroundColor: "transparent",
+        tooltip: { trigger: "axis" },
+        legend: {},
+        grid: { left: 70, right: 20, top: 40, bottom: 30 },
+        xAxis: { type: "category", data: d.dates },
+        yAxis: { type: "value" },
+        series: [
+            { name: "ยอดขาย", type: "bar", data: d.revenue, itemStyle: { color: "#33FFFF" } },
+            { name: "กำไรสุทธิ", type: "line", smooth: true, data: d.profit, itemStyle: { color: "#7CFC00" } },
+        ],
+    });
+    window.addEventListener("resize", () => c.resize());
+})();
+</script>
+{% endblock %}
