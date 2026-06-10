@@ -57,6 +57,28 @@ echo "==> Python virtualenv + dependencies"
 "$VENV/bin/pip" install -q --upgrade pip
 "$VENV/bin/pip" install -q -r "$PROJ_DIR/requirements.txt"
 
+echo "==> PostgreSQL cluster port"
+# Docker containers may already publish 5432/5433 (e.g. jst_db, profit_income_db),
+# which prevents the system cluster from binding. Move it to the first free port.
+PG_VER=$(pg_lsclusters --no-header | awk '{print $1; exit}')
+PG_STATUS=$(pg_lsclusters --no-header | awk '{print $4; exit}')
+DB_PORT=$(pg_lsclusters --no-header | awk '{print $3; exit}')
+if [ "$PG_STATUS" != "online" ]; then
+    DB_PORT=5432
+    while ss -ltnH | awk '{print $4}' | grep -q ":$DB_PORT\$"; do
+        DB_PORT=$((DB_PORT + 1))
+    done
+    echo "    cluster is down (port taken) — moving PostgreSQL $PG_VER/main to port $DB_PORT"
+    pg_conftool "$PG_VER" main set port "$DB_PORT"
+    systemctl restart postgresql
+fi
+for _ in $(seq 1 15); do
+    pg_isready -q -h 127.0.0.1 -p "$DB_PORT" && break
+    sleep 1
+done
+pg_isready -q -h 127.0.0.1 -p "$DB_PORT" || { echo "PostgreSQL did not come up on port $DB_PORT"; exit 1; }
+echo "    system PostgreSQL listening on 127.0.0.1:$DB_PORT"
+
 echo "==> PostgreSQL role + database"
 DB_PASS_FILE=$APP_ROOT/.db_password
 if [ ! -f "$DB_PASS_FILE" ]; then
@@ -79,7 +101,7 @@ DJANGO_SETTINGS_MODULE=config.settings.prod
 DJANGO_DEBUG=0
 SECRET_KEY=$SECRET
 ALLOWED_HOSTS=$SERVER_NAME
-DATABASE_URL=postgres://shopboard:$DB_PASS@127.0.0.1:5432/shopboard
+DATABASE_URL=postgres://shopboard:$DB_PASS@127.0.0.1:$DB_PORT/shopboard
 CSRF_TRUSTED_ORIGINS=https://$SERVER_NAME
 # USE_HTTPS=1   # uncomment after certbot
 
@@ -103,6 +125,8 @@ EOF
     echo "    generated $ENV_FILE — admin password: $ADMIN_PASS  (CHANGE THE EMAIL SETTINGS)"
 else
     echo "    $ENV_FILE already exists — left untouched"
+    grep -q "127.0.0.1:$DB_PORT/" "$ENV_FILE" \
+        || echo "    WARNING: DATABASE_URL in .env does not point at port $DB_PORT — update it manually"
 fi
 
 echo "==> Permissions"

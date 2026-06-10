@@ -21,6 +21,12 @@ internet ──> nginx :80/:443 ──> gunicorn (unix socket) ──> Django (c
 | nginx site | `/etc/nginx/sites-available/shopboard` |
 | DB password | `/srv/shopboard/.db_password` (generated) |
 
+**Port note:** if 5432/5433 are already taken (e.g. existing Docker postgres
+containers like `jst_db` / `profit_income_db`), the setup script automatically
+moves the system PostgreSQL cluster to the first free port (usually **5434**)
+and writes that port into `DATABASE_URL`. Check the actual port with
+`pg_lsclusters` — the existing containers are not touched.
+
 Tested target: Ubuntu 22.04/24.04 LTS (PostgreSQL 14/16 — the app needs 15+ features
 only via standard SQL, both work; prefer 24.04).
 
@@ -107,6 +113,7 @@ Uploaded Excel files live in the database **and** `/srv/shopboard/app/shopboard/
 | Symptom | Check |
 |---|---|
 | 502 Bad Gateway | `systemctl status shopboard`; socket exists at `/run/shopboard/gunicorn.sock` |
+| System postgres won't start | port collision with a Docker postgres — `pg_lsclusters`, then `pg_conftool 16 main set port 5434 && systemctl restart postgresql` and fix the port in `.env` |
 | CSRF error on login | `ALLOWED_HOSTS` + `CSRF_TRUSTED_ORIGINS` in `.env` match the domain (with `https://` prefix for the latter) |
 | Login loops / cookie not set | `USE_HTTPS=1` set while still on plain HTTP — remove it |
 | OTP mail not arriving | `journalctl -u shopboard` for SMTP errors; Gmail requires an app password |
