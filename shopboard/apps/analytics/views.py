@@ -1,4 +1,3 @@
-import json
 from datetime import date, timedelta
 
 from django.contrib.auth.decorators import login_required
@@ -12,7 +11,7 @@ from apps.core import channels
 from apps.core.decorators import channel_required
 from apps.core.thai import THAI_MONTHS, thai_date
 
-from . import queries
+from . import grids, queries
 from .filters import FilterState
 
 
@@ -126,7 +125,7 @@ def home(request):
         loss_count=loss_count,
         missing_master=missing_master[:10],
         missing_master_count=len(missing_master),
-        chart_json=json.dumps(chart),
+        chart_json=chart,
     )
     return render(request, "analytics/home.html", ctx)
 
@@ -136,54 +135,11 @@ def report_monthly(request):
     ctx = _base_ctx(request)
     channel, f, ids, skus = ctx["channel"], ctx["f"], ctx["shop_ids"], ctx["skus"]
     skus = skus or [""]
-    ctx["kpi"] = queries.kpis(channel, f, ids, skus)
+    ctx["kpi"] = kpi = queries.kpis(channel, f, ids, skus)
     day_rows = {r["date"]: r for r in queries.per_day(channel, f, ids, skus)}
     cell = queries.per_day_sku_net(channel, f, ids, skus)
-
-    matrix = []
-    d = f.date_from
-    while d <= f.date_to:
-        r = day_rows.get(d)
-        rev = float(r["revenue"]) if r else 0
-        net = float(r["net_profit"]) if r else 0
-        ads = float(r["ads_amount"]) if r else 0
-        matrix.append({
-            "date": d,
-            "orders": int(r["orders"]) if r else 0,
-            "revenue": rev,
-            "net": net,
-            "p_pct": net / rev * 100 if rev else 0,
-            "ads": ads,
-            "a_pct": ads / rev * 100 if rev else 0,
-            "cells": [cell.get((d, s), 0) for s in ctx["skus"]],
-        })
-        d += timedelta(days=1)
-
     footer = {r["sku_root"]: r for r in _fmt_rows(queries.per_sku(channel, f, ids, skus), ctx["names"])}
-    ctx["matrix"] = matrix
-    ctx["sku_headers"] = [(s, ctx["names"].get(s, "")) for s in ctx["skus"]]
-
-    # 6-row footer block (legacy report_month.py:248-359): per-SKU totals with
-    # (% of that SKU's sales); ops = box+delivery+COD, com = admin+telesale
-    cells = []
-    for s in ctx["skus"]:
-        d = footer.get(s)
-        sales = d["revenue"] if d else 0
-        ops = (d["box_cost"] + d["delivery_cost"] + d["cod_cost"]) if d else 0
-        com = (d["com_admin"] + d["com_tele"]) if d else 0
-        cost = d["product_cost"] if d else 0
-        ads = d["ads_amount"] if d else 0
-        net = d["net_profit"] if d else 0
-
-        def _pct(v):
-            return v / sales * 100 if sales else 0
-
-        cells.append({
-            "sales": sales, "cost": cost, "ads": ads, "ops": ops, "com": com, "net": net,
-            "net_pct": _pct(net), "cost_pct": _pct(cost), "ads_pct": _pct(ads),
-            "ops_pct": _pct(ops), "com_pct": _pct(com),
-        })
-    ctx["footer_cells"] = cells
+    ctx["grid_json"] = grids.monthly_grid(f, day_rows, cell, ctx["skus"], ctx["names"], footer, kpi)
     return render(request, "analytics/report_monthly.html", ctx)
 
 
@@ -207,15 +163,17 @@ def report_daily(request):
         date_from = day
         date_to = day
 
+    kpi = queries.kpis(channel, DayRange, ids, skus or [""])
     ctx.update(
         day=day,
         day_label=thai_date(day, short=False),
         prev_day=day - timedelta(days=1),
         next_day=day + timedelta(days=1),
         rows=rows,
-        kpi=queries.kpis(channel, DayRange, ids, skus or [""]),
+        kpi=kpi,
         sort=sort,
         dir=direction,
+        grid_json=grids.daily_grid(rows, kpi),
     )
     return render(request, "analytics/report_daily.html", ctx)
 
@@ -231,15 +189,19 @@ def report_ads(request):
     total_rev = sum(r["revenue"] for r in rows)
     campaigns = queries.ads_campaigns(channel, f, ids)
     master_skus = set(MasterItem.objects.filter(channel=channel).values_list("sku", flat=True))
+    avg_roas = total_rev / total_ads if total_ads else 0
+    total_net = sum(r["net_profit"] for r in rows)
     ctx.update(
         rows=rows,
         kpi=queries.kpis(channel, f, ids, skus or [""]),
         total_ads=total_ads,
-        avg_roas=total_rev / total_ads if total_ads else 0,
+        avg_roas=avg_roas,
         campaigns=campaigns,
         n_campaigns=len({c["campaign_name"] for c in campaigns}),
         master_skus=master_skus,
         tab=request.GET.get("tab", "sku"),
+        grid_json=grids.ads_sku_grid(rows, total_ads, total_rev, avg_roas, total_net),
+        campaign_grid_json=grids.ads_campaign_grid(campaigns, master_skus),
     )
     return render(request, "analytics/report_ads.html", ctx)
 
@@ -256,8 +218,8 @@ def product_graph(request):
     ctx.update(
         metric=metric,
         capped=len(ctx["skus"]) > 12,
-        graph_json=json.dumps({"dates": ts["dates"], "series": series}),
-        bar_json=json.dumps({
+        graph_json={"dates": ts["dates"], "series": series},
+        bar_json=({
             "skus": [r["sku_root"] for r in totals],
             "revenue": [r["revenue"] for r in totals],
             "quantity": [r["quantity"] for r in totals],
@@ -303,19 +265,19 @@ def _pnl_ctx(request, year, months):
 def pnl_yearly(request):
     year = int(request.GET.get("year", timezone.localdate().year))
     ctx = _pnl_ctx(request, year, list(range(1, 13)))
-    ctx["chart_json"] = json.dumps({
+    ctx["chart_json"] = {
         "months": [r["month_label"] for r in ctx["table"]],
         "revenue": [r["revenue"] for r in ctx["table"]],
         "profit": [r["net_after_fix"] for r in ctx["table"]],
-    })
+    }
     t = ctx["total"]
-    ctx["donut_json"] = json.dumps([
+    ctx["donut_json"] = [
         {"name": "ทุนสินค้า", "value": t.get("product_cost", 0)},
         {"name": "ค่าดำเนินการ", "value": t.get("box_cost", 0) + t.get("delivery_cost", 0) + t.get("cod_cost", 0)},
         {"name": "ค่าคอมมิชชั่น", "value": t.get("com_admin", 0) + t.get("com_tele", 0)},
         {"name": "ค่าโฆษณา", "value": t.get("ads_amount", 0)},
         {"name": "ค่าใช้จ่ายคงที่", "value": t.get("fix_cost", 0)},
-    ]) if t else "[]"
+    ] if t else []
     return render(request, "analytics/pnl_yearly.html", ctx)
 
 
@@ -354,7 +316,8 @@ def commission(request):
     total_tele = sum(r["com_tele"] for r in out)
     total_rev = sum(r["revenue"] for r in out)
     ctx.update(rows=out, role=role, total_admin=total_admin, total_tele=total_tele,
-               com_pct=(total_admin + total_tele) / total_rev * 100 if total_rev else 0)
+               com_pct=(total_admin + total_tele) / total_rev * 100 if total_rev else 0,
+               grid_json=grids.commission_grid(out, total_admin, total_tele, total_rev))
     return render(request, "analytics/commission.html", ctx)
 
 
@@ -375,11 +338,11 @@ def sku_detail(request, sku):
         tags=list(
             ProductTag.objects.filter(channel=channel, sku=sku).select_related("tag", "tag__group")
         ),
-        chart_json=json.dumps({
+        chart_json={
             "dates": ts["dates"],
             "revenue": ts["series"].get(sku, []),
             "profit": [ts_net["series"].get(sku, [0] * len(ts_net["dates"]))[i]
                        for i in range(len(ts_net["dates"]))],
-        }),
+        },
     )
     return render(request, "analytics/sku_detail.html", ctx)

@@ -33,51 +33,26 @@
 </div>
 
 {% if tab == 'campaign' %}
-<div class="card table-card">
-    <div class="table-scroll">
-    <table class="data-table">
-        <thead><tr><th>แคมเปญ</th><th>SKU</th><th class="num">ค่าใช้จ่าย</th><th>ช่วงวันที่</th></tr></thead>
-        <tbody>
-            {% for c in campaigns %}
-            <tr>
-                <td>{{ c.campaign_name|truncatechars:70 }}</td>
-                <td>
-                    {% if c.sku_root %}
-                        <span class="mono">{{ c.sku_root }}</span>
-                        {% if c.sku_root not in master_skus %}<span class="status-chip err">ไม่พบใน Master</span>{% endif %}
-                    {% else %}<span class="status-chip err">ไม่ระบุ SKU</span>{% endif %}
-                </td>
-                <td class="num" style="color: var(--c-ads)">{{ c.cost|money2 }}</td>
-                <td>{{ c.date_min|date:"d/m/y" }} – {{ c.date_max|date:"d/m/y" }}</td>
-            </tr>
-            {% empty %}<tr><td colspan="4" class="empty-cell">ไม่มีแคมเปญในช่วงที่เลือก</td></tr>{% endfor %}
-        </tbody>
-    </table>
-    </div>
+<div class="grid-toolbar">
+    <button id="grid-campaigns-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
+<div id="grid-campaigns" class="ag-theme-quartz legacy-grid grid-box"></div>
+{{ campaign_grid_json|json_script:"grid-campaigns-data" }}
 {% else %}
-<div class="card table-card">
-    <div class="table-scroll">
-    <table class="data-table">
-        <thead>
-            <tr><th>SKU</th><th>ชื่อสินค้า</th><th class="num">ค่าแอด</th><th class="num">ยอดขาย</th>
-                <th class="num">%แอด</th><th class="num">ROAS</th><th class="num">กำไร</th></tr>
-        </thead>
-        <tbody>
-            {% for r in rows %}
-            <tr>
-                <td><a class="mono" href="{% url 'analytics:sku_detail' r.sku_root %}">{{ r.sku_root }}</a></td>
-                <td>{{ r.name|truncatechars:40 }}</td>
-                <td class="num" style="color: var(--c-ads)">{{ r.ads_amount|money }}</td>
-                <td class="num">{{ r.revenue|money }}</td>
-                <td class="num">{{ r.ads_pct|pct }}</td>
-                <td class="num">{{ r.roas|money2 }}</td>
-                <td class="num {{ r.net_profit|neg }}">{{ r.net_profit|money }}</td>
-            </tr>
-            {% empty %}<tr><td colspan="7" class="empty-cell">ไม่มีข้อมูล</td></tr>{% endfor %}
-        </tbody>
-    </table>
-    </div>
+<div class="grid-toolbar">
+    <button id="grid-ads-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
+<div id="grid-ads" class="ag-theme-quartz legacy-grid grid-box"></div>
+{{ grid_json|json_script:"grid-ads-data" }}
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+{% if tab == 'campaign' %}
+initReportGrid("grid-campaigns", "grid-campaigns-data", { exportName: "ads-campaigns" });
+{% else %}
+initReportGrid("grid-ads", "grid-ads-data", { exportName: "report-ads" });
+{% endif %}
+</script>
 {% endblock %}

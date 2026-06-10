@@ -21,71 +21,16 @@
 {% include "components/_filter_bar.html" %}
 {% include "components/_kpi_row.html" %}
 
-<div class="card table-card">
-    <div class="table-scroll">
-    <table class="data-table">
-        <thead>
-            <tr>
-                {% with qs=f.querystring %}
-                <th>SKU</th><th>ชื่อสินค้า</th>
-                <th class="num"><a href="?{{ qs }}&date={{ day|date:'Y-m-d' }}&sort=orders&dir={% if sort == 'orders' and dir == 'desc' %}asc{% else %}desc{% endif %}">ออเดอร์</a></th>
-                <th class="num"><a href="?{{ qs }}&date={{ day|date:'Y-m-d' }}&sort=revenue&dir={% if sort == 'revenue' and dir == 'desc' %}asc{% else %}desc{% endif %}">ยอดขาย</a></th>
-                <th class="num">ทุนสินค้า</th>
-                <th class="num">ค่ากล่อง</th>
-                <th class="num">ค่าส่ง</th>
-                <th class="num">COD</th>
-                <th class="num">คอม Admin</th>
-                <th class="num">คอม Tele</th>
-                <th class="num"><a href="?{{ qs }}&date={{ day|date:'Y-m-d' }}&sort=ads_amount&dir={% if sort == 'ads_amount' and dir == 'desc' %}asc{% else %}desc{% endif %}">ค่าแอด</a></th>
-                <th class="num"><a href="?{{ qs }}&date={{ day|date:'Y-m-d' }}&sort=net_profit&dir={% if sort == 'net_profit' and dir == 'desc' %}asc{% else %}desc{% endif %}">กำไร</a></th>
-                <th class="num">ROAS</th>
-                <th class="num">%กำไร</th>
-                <th class="num">%แอด</th>
-                {% endwith %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in rows %}
-            <tr>
-                <td><a class="mono" href="{% url 'analytics:sku_detail' r.sku_root %}">{{ r.sku_root }}</a></td>
-                <td>{{ r.name|truncatechars:35 }}</td>
-                <td class="num">{{ r.orders|money }}</td>
-                <td class="num" style="color: var(--c-sales)">{{ r.revenue|money }}</td>
-                <td class="num">{{ r.product_cost|money }}</td>
-                <td class="num">{{ r.box_cost|money }}</td>
-                <td class="num">{{ r.delivery_cost|money }}</td>
-                <td class="num">{{ r.cod_cost|money }}</td>
-                <td class="num">{{ r.com_admin|money }}</td>
-                <td class="num">{{ r.com_tele|money }}</td>
-                <td class="num" style="color: var(--c-ads)">{{ r.ads_amount|money }}</td>
-                <td class="num {{ r.net_profit|neg }}" style="{% if r.net_profit > 0 %}color: var(--c-profit){% endif %}">{{ r.net_profit|money }}</td>
-                <td class="num">{{ r.roas|money2 }}</td>
-                <td class="num {{ r.profit_pct|neg }}">{{ r.profit_pct|pct }}</td>
-                <td class="num">{{ r.ads_pct|pct }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="15" class="empty-cell">ไม่มีข้อมูลวันที่เลือก</td></tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr class="total-row">
-                <td colspan="2">รวม</td>
-                <td class="num">{{ kpi.orders|money }}</td>
-                <td class="num">{{ kpi.revenue|money }}</td>
-                <td class="num">{{ kpi.product_cost|money }}</td>
-                <td class="num">{{ kpi.box_cost|money }}</td>
-                <td class="num">{{ kpi.delivery_cost|money }}</td>
-                <td class="num">{{ kpi.cod_cost|money }}</td>
-                <td class="num">{{ kpi.com_admin|money }}</td>
-                <td class="num">{{ kpi.com_tele|money }}</td>
-                <td class="num">{{ kpi.ads_amount|money }}</td>
-                <td class="num {{ kpi.net_profit|neg }}">{{ kpi.net_profit|money }}</td>
-                <td class="num"></td>
-                <td class="num">{{ kpi.profit_pct|pct }}</td>
-                <td class="num">{{ kpi.ads_pct|pct }}</td>
-            </tr>
-        </tfoot>
-    </table>
-    </div>
+<div class="grid-toolbar">
+    <button id="grid-daily-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
+<div id="grid-daily" class="ag-theme-quartz legacy-grid grid-box"></div>
+
+{{ grid_json|json_script:"grid-daily-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+initReportGrid("grid-daily", "grid-daily-data", { exportName: "report-daily-{{ day|date:'Y-m-d' }}" });
+</script>
 {% endblock %}

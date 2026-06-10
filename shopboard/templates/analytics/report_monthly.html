@@ -9,92 +9,20 @@
 {% include "components/_filter_bar.html" %}
 {% include "components/_kpi_row.html" %}
 
-<div class="card table-card">
-    <div class="table-scroll matrix-scroll">
-    <table class="data-table matrix-table">
-        <thead>
-            <tr>
-                <th class="sticky-col c1">วันที่</th>
-                <th class="sticky-col c2 num">ยอดขาย</th>
-                <th class="sticky-col c3 num">ออเดอร์</th>
-                <th class="sticky-col c4 num">กำไร</th>
-                <th class="sticky-col c5 num">%กำไร</th>
-                <th class="sticky-col c6 num">ค่าแอด</th>
-                <th class="sticky-col c7 num">%แอด</th>
-                {% for s, name in sku_headers %}
-                <th class="th-sku">
-                    <a href="{% url 'analytics:sku_detail' s %}">{{ s }}</a>
-                    <span class="sku-sub">{{ name|truncatechars:24 }}</span>
-                </th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in matrix %}
-            <tr>
-                <td class="sticky-col c1">{{ row.date|date:"D d/m/y" }}</td>
-                <td class="sticky-col c2 num"><strong>{{ row.revenue|money }}</strong></td>
-                <td class="sticky-col c3 num">{{ row.orders|money }}</td>
-                <td class="sticky-col c4 num {{ row.net|neg }}" style="{% if row.net > 0 %}color: var(--c-profit){% endif %}">{{ row.net|money }}</td>
-                <td class="sticky-col c5 num {{ row.p_pct|neg }}">{{ row.p_pct|pct }}</td>
-                <td class="sticky-col c6 num" style="color: var(--c-ads)">{{ row.ads|money }}</td>
-                <td class="sticky-col c7 num">{{ row.a_pct|pct }}</td>
-                {% for v in row.cells %}
-                <td class="num cell-heat {{ v|neg }}" data-v="{{ v|floatformat:0 }}">{{ v|money }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            {# grand-total row (legacy bg #010538) — per-SKU: net profit + (%กำไร) #}
-            <tr class="frow frow-total">
-                <td class="sticky-col c1">รวม</td>
-                <td class="sticky-col c2 num">{{ kpi.revenue|money }}</td>
-                <td class="sticky-col c3 num">{{ kpi.orders|money }}</td>
-                <td class="sticky-col c4 num {% if kpi.net_profit < 0 %}f-neg{% else %}f-pos{% endif %}">{{ kpi.net_profit|money }}</td>
-                <td class="sticky-col c5 num {% if kpi.net_profit < 0 %}f-neg{% else %}f-pos{% endif %}">{{ kpi.profit_pct|pct }}</td>
-                <td class="sticky-col c6 num f-ads">{{ kpi.ads_amount|money }}</td>
-                <td class="sticky-col c7 num f-ads">{{ kpi.ads_pct|pct }}</td>
-                {% for c in footer_cells %}
-                <td class="num {% if c.net < 0 %}f-neg{% else %}f-pos{% endif %}">{{ c.net|money }} <em>({{ c.net_pct|pct }})</em></td>
-                {% endfor %}
-            </tr>
-            <tr class="frow frow-sales">
-                <td class="sticky-col c1">รวมยอดขาย</td>
-                <td class="sticky-col c2 num">{{ kpi.revenue|money }}</td>
-                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
-                {% for c in footer_cells %}<td class="num">{{ c.sales|money }}</td>{% endfor %}
-            </tr>
-            <tr class="frow frow-cost">
-                <td class="sticky-col c1">รวมทุนสินค้า</td>
-                <td class="sticky-col c2 num">{{ kpi.product_cost|money }} <em>({{ kpi.cost_pct|pct }})</em></td>
-                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
-                {% for c in footer_cells %}<td class="num">{{ c.cost|money }} <em>({{ c.cost_pct|pct }})</em></td>{% endfor %}
-            </tr>
-            <tr class="frow frow-ads">
-                <td class="sticky-col c1">รวมค่าแอด</td>
-                <td class="sticky-col c2 num">{{ kpi.ads_amount|money }} <em>({{ kpi.ads_pct|pct }})</em></td>
-                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
-                {% for c in footer_cells %}<td class="num">{{ c.ads|money }} <em>({{ c.ads_pct|pct }})</em></td>{% endfor %}
-            </tr>
-            <tr class="frow frow-ops">
-                <td class="sticky-col c1">รวมค่าดำเนินการ</td>
-                <td class="sticky-col c2 num">{{ kpi.ops_cost|money }} <em>({{ kpi.ops_pct|pct }})</em></td>
-                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
-                {% for c in footer_cells %}<td class="num">{{ c.ops|money }} <em>({{ c.ops_pct|pct }})</em></td>{% endfor %}
-            </tr>
-            <tr class="frow frow-com">
-                <td class="sticky-col c1">รวมค่าคอมมิชชั่น</td>
-                <td class="sticky-col c2 num">{{ kpi.com_cost|money }} <em>({{ kpi.com_pct|pct }})</em></td>
-                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
-                {% for c in footer_cells %}<td class="num">{{ c.com|money }} <em>({{ c.com_pct|pct }})</em></td>{% endfor %}
-            </tr>
-        </tfoot>
-    </table>
-    </div>
+<div class="grid-toolbar">
+    <button id="grid-monthly-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
+<div id="grid-monthly" class="ag-theme-quartz legacy-grid grid-box"></div>
+
+{{ grid_json|json_script:"grid-monthly-data" }}
 
 {% if freshness %}
 <p class="hint page-foot">ข้อมูลล่าสุด: {{ freshness.uploaded_at|date:"d/m/Y H:i" }} • นำเข้าโดย {{ freshness.uploaded_by.get_username|default:"ระบบ" }}</p>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+initReportGrid("grid-monthly", "grid-monthly-data", { twoLine: true, exportName: "report-monthly" });
+</script>
 {% endblock %}

@@ -33,27 +33,15 @@
     <a class="tab {% if role == 'tele' %}active{% endif %}" href="?{{ f.querystring }}&role=tele">Telesale</a>
 </div>
 
-<div class="card table-card">
-    <div class="table-scroll">
-    <table class="data-table">
-        <thead>
-            <tr><th>เดือน</th><th>SKU</th><th>ชื่อสินค้า</th><th class="num">ยอดขาย</th>
-                <th class="num">คอม Admin</th><th class="num">คอม Telesale</th><th class="num">รวม</th></tr>
-        </thead>
-        <tbody>
-            {% for r in rows %}
-            <tr>
-                <td>{{ r.month_label }} {{ r.year }}</td>
-                <td><a class="mono" href="{% url 'analytics:sku_detail' r.sku_root %}">{{ r.sku_root }}</a></td>
-                <td>{{ r.name|truncatechars:35 }}</td>
-                <td class="num">{{ r.revenue|money }}</td>
-                <td class="num" style="color: var(--c-com)">{{ r.com_admin|money2 }}</td>
-                <td class="num" style="color: var(--c-com)">{{ r.com_tele|money2 }}</td>
-                <td class="num"><strong>{{ r.total|money2 }}</strong></td>
-            </tr>
-            {% empty %}<tr><td colspan="7" class="empty-cell">ไม่มีค่าคอมมิชชั่นในช่วงที่เลือก</td></tr>{% endfor %}
-        </tbody>
-    </table>
-    </div>
+<div class="grid-toolbar">
+    <button id="grid-com-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
+<div id="grid-com" class="ag-theme-quartz legacy-grid grid-box"></div>
+{{ grid_json|json_script:"grid-com-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+initReportGrid("grid-com", "grid-com-data", { exportName: "commission" });
+</script>
 {% endblock %}
