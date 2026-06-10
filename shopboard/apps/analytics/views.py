@@ -161,8 +161,29 @@ def report_monthly(request):
 
     footer = {r["sku_root"]: r for r in _fmt_rows(queries.per_sku(channel, f, ids, skus), ctx["names"])}
     ctx["matrix"] = matrix
-    ctx["footer"] = [footer.get(s) for s in ctx["skus"]]
     ctx["sku_headers"] = [(s, ctx["names"].get(s, "")) for s in ctx["skus"]]
+
+    # 6-row footer block (legacy report_month.py:248-359): per-SKU totals with
+    # (% of that SKU's sales); ops = box+delivery+COD, com = admin+telesale
+    cells = []
+    for s in ctx["skus"]:
+        d = footer.get(s)
+        sales = d["revenue"] if d else 0
+        ops = (d["box_cost"] + d["delivery_cost"] + d["cod_cost"]) if d else 0
+        com = (d["com_admin"] + d["com_tele"]) if d else 0
+        cost = d["product_cost"] if d else 0
+        ads = d["ads_amount"] if d else 0
+        net = d["net_profit"] if d else 0
+
+        def _pct(v):
+            return v / sales * 100 if sales else 0
+
+        cells.append({
+            "sales": sales, "cost": cost, "ads": ads, "ops": ops, "com": com, "net": net,
+            "net_pct": _pct(net), "cost_pct": _pct(cost), "ads_pct": _pct(ads),
+            "ops_pct": _pct(ops), "com_pct": _pct(com),
+        })
+    ctx["footer_cells"] = cells
     return render(request, "analytics/report_monthly.html", ctx)
 
 

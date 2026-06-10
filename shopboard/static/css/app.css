@@ -511,3 +511,30 @@ body:has(.test-banner) .filter-bar { top: 81px; }
 .pnl-table td:first-child { font-weight: 600; }
 .pnl-sub td { color: var(--text-dim); font-style: italic; }
 .fixcost-card { margin-top: 14px; }
+
+/* ---------- monthly matrix footer block (legacy month-table tfoot colors) ---------- */
+.frow td {
+    font-weight: 700; white-space: nowrap; color: #fff;
+    padding-top: 5px; padding-bottom: 5px; height: 30px; line-height: 1.2;
+    border-top: none;
+}
+.frow td em { font-style: italic; font-weight: 400; font-size: 11px; opacity: 0.85; }
+.frow-total td { background: #010538; }
+.frow-sales td { background: #2c3e50; }
+.frow-cost  td { background: #3366ff; }
+.frow-ads   td { background: #e67e22; }
+.frow-ops   td { background: #691e72; }
+.frow-com   td { background: #176f98; }
+.frow .f-neg { color: #FF4D4D; }
+.frow-total .f-pos { color: #7CFC00; }
+.frow-total .f-ads { color: #FF6633; }
+.frow td.sticky-col { z-index: 4; }
+.frow-total td { border-top: 2px solid var(--border); }
+
+/* stack the 6 sticky footer rows from the bottom up (fixed 30px row height) */
+.matrix-table tfoot tr:nth-last-child(1) td { bottom: 0; }
+.matrix-table tfoot tr:nth-last-child(2) td { bottom: 30px; }
+.matrix-table tfoot tr:nth-last-child(3) td { bottom: 60px; }
+.matrix-table tfoot tr:nth-last-child(4) td { bottom: 90px; }
+.matrix-table tfoot tr:nth-last-child(5) td { bottom: 120px; }
+.matrix-table tfoot tr:nth-last-child(6) td { bottom: 150px; }

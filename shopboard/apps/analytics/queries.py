@@ -144,6 +144,9 @@ def kpis(channel, f, ids, skus) -> dict:
     rev = r["revenue"]
     r["profit_pct"] = r["net_profit"] / rev * 100 if rev else 0
     r["ads_pct"] = r["ads_amount"] / rev * 100 if rev else 0
+    r["cost_pct"] = r["product_cost"] / rev * 100 if rev else 0
+    r["ops_pct"] = r["ops_cost"] / rev * 100 if rev else 0
+    r["com_pct"] = r["com_cost"] / rev * 100 if rev else 0
     return r
 
 

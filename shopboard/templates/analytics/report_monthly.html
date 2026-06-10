@@ -46,17 +46,48 @@
             {% endfor %}
         </tbody>
         <tfoot>
-            <tr class="total-row">
+            {# grand-total row (legacy bg #010538) — per-SKU: net profit + (%กำไร) #}
+            <tr class="frow frow-total">
                 <td class="sticky-col c1">รวม</td>
                 <td class="sticky-col c2 num">{{ kpi.revenue|money }}</td>
                 <td class="sticky-col c3 num">{{ kpi.orders|money }}</td>
-                <td class="sticky-col c4 num {{ kpi.net_profit|neg }}">{{ kpi.net_profit|money }}</td>
-                <td class="sticky-col c5 num">{{ kpi.profit_pct|pct }}</td>
-                <td class="sticky-col c6 num">{{ kpi.ads_amount|money }}</td>
-                <td class="sticky-col c7 num">{{ kpi.ads_pct|pct }}</td>
-                {% for fr in footer %}
-                <td class="num {{ fr.net_profit|default:0|neg }}">{{ fr.net_profit|default:0|money }}</td>
+                <td class="sticky-col c4 num {% if kpi.net_profit < 0 %}f-neg{% else %}f-pos{% endif %}">{{ kpi.net_profit|money }}</td>
+                <td class="sticky-col c5 num {% if kpi.net_profit < 0 %}f-neg{% else %}f-pos{% endif %}">{{ kpi.profit_pct|pct }}</td>
+                <td class="sticky-col c6 num f-ads">{{ kpi.ads_amount|money }}</td>
+                <td class="sticky-col c7 num f-ads">{{ kpi.ads_pct|pct }}</td>
+                {% for c in footer_cells %}
+                <td class="num {% if c.net < 0 %}f-neg{% else %}f-pos{% endif %}">{{ c.net|money }} <em>({{ c.net_pct|pct }})</em></td>
                 {% endfor %}
+            </tr>
+            <tr class="frow frow-sales">
+                <td class="sticky-col c1">รวมยอดขาย</td>
+                <td class="sticky-col c2 num">{{ kpi.revenue|money }}</td>
+                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
+                {% for c in footer_cells %}<td class="num">{{ c.sales|money }}</td>{% endfor %}
+            </tr>
+            <tr class="frow frow-cost">
+                <td class="sticky-col c1">รวมทุนสินค้า</td>
+                <td class="sticky-col c2 num">{{ kpi.product_cost|money }} <em>({{ kpi.cost_pct|pct }})</em></td>
+                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
+                {% for c in footer_cells %}<td class="num">{{ c.cost|money }} <em>({{ c.cost_pct|pct }})</em></td>{% endfor %}
+            </tr>
+            <tr class="frow frow-ads">
+                <td class="sticky-col c1">รวมค่าแอด</td>
+                <td class="sticky-col c2 num">{{ kpi.ads_amount|money }} <em>({{ kpi.ads_pct|pct }})</em></td>
+                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
+                {% for c in footer_cells %}<td class="num">{{ c.ads|money }} <em>({{ c.ads_pct|pct }})</em></td>{% endfor %}
+            </tr>
+            <tr class="frow frow-ops">
+                <td class="sticky-col c1">รวมค่าดำเนินการ</td>
+                <td class="sticky-col c2 num">{{ kpi.ops_cost|money }} <em>({{ kpi.ops_pct|pct }})</em></td>
+                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
+                {% for c in footer_cells %}<td class="num">{{ c.ops|money }} <em>({{ c.ops_pct|pct }})</em></td>{% endfor %}
+            </tr>
+            <tr class="frow frow-com">
+                <td class="sticky-col c1">รวมค่าคอมมิชชั่น</td>
+                <td class="sticky-col c2 num">{{ kpi.com_cost|money }} <em>({{ kpi.com_pct|pct }})</em></td>
+                <td class="sticky-col c3"></td><td class="sticky-col c4"></td><td class="sticky-col c5"></td><td class="sticky-col c6"></td><td class="sticky-col c7"></td>
+                {% for c in footer_cells %}<td class="num">{{ c.com|money }} <em>({{ c.com_pct|pct }})</em></td>{% endfor %}
             </tr>
         </tfoot>
     </table>
