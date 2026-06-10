@@ -54,6 +54,49 @@ password → generate `.env` (SECRET_KEY, DB URL, random admin password — **pr
 once, save it**) → migrate, collectstatic, `ensure_superuser` → install + start
 the `shopboard` systemd service → install + reload the nginx site.
 
+## 1b. Sub-path and shared nginx (server hosts other apps)
+
+To serve the app under a path prefix, pass it as the third argument:
+
+```bash
+sudo bash setup_ubuntu.sh 103.114.201.9 "" /shopboard     # → http://103.114.201.9/shopboard/
+```
+
+If nginx on the server is already managed by hand (other apps share port 80),
+the setup script detects an existing site for the same `server_name` and leaves
+nginx alone. Add these location blocks to your existing server block instead:
+
+```nginx
+location /shopboard/static/ {
+    alias /srv/shopboard/app/shopboard/staticfiles/;
+    access_log off;
+    expires 7d;
+}
+location /shopboard/media/ {
+    alias /srv/shopboard/app/shopboard/media/;
+}
+location = /shopboard { return 301 /shopboard/; }
+location /shopboard/ {
+    proxy_pass http://unix:/run/shopboard/gunicorn.sock;
+    # gunicorn honors this header: Django strips the prefix from the path and
+    # prepends it to every generated URL. Do NOT use a rewrite to strip the
+    # prefix — Django would then emit links without it and they 404.
+    proxy_set_header SCRIPT_NAME /shopboard;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 120s;
+}
+```
+
+and add the prefix to static/media URLs in `.env` (then `systemctl restart shopboard`):
+
+```
+STATIC_URL=/shopboard/static/
+MEDIA_URL=/shopboard/media/
+```
+
 ## 2. After setup (required)
 
 1. **SMTP for OTP mail** — edit `/srv/shopboard/app/shopboard/.env`:

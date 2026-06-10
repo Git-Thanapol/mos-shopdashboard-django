@@ -20,8 +20,9 @@ docker compose up -d --build
 
 ## Production deployment (Ubuntu + nginx + gunicorn)
 
-See **[DEPLOY.md](DEPLOY.md)** — one-command provisioning via `deploy/setup_ubuntu.sh`,
-updates via `deploy/deploy.sh`, systemd unit and nginx site in `deploy/`.
+See **[DEPLOY.md](DEPLOY.md)** — one-command provisioning via `deploy/setup_ubuntu.sh`
+(generates the nginx site, supports a sub-path prefix and shared-nginx servers),
+updates via `deploy/deploy.sh`, systemd unit in `deploy/`.
 
 ## One-off legacy data import
 

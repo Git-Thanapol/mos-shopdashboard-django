@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.analytics.facts import refresh_facts
@@ -197,7 +198,7 @@ def group_create(request):
     if form.is_valid():
         group = form.save()
         messages.success(request, f"เพิ่มกลุ่ม {group.name} แล้ว")
-        return redirect(f"/settings/tags/?group={group.pk}")
+        return redirect(reverse("catalog:tags") + f"?group={group.pk}")
     messages.error(
         request,
         "เพิ่มกลุ่มไม่สำเร็จ: " + "; ".join(e for errs in form.errors.values() for e in errs),
@@ -216,7 +217,7 @@ def group_update(request, pk):
         group.color = request.POST["color"]
     group.is_visible = request.POST.get("is_visible", "on") == "on"
     group.save()
-    return redirect(f"{request.POST.get('next', '/settings/tags/')}?group={group.pk}")
+    return redirect(reverse("catalog:tags") + f"?group={group.pk}")
 
 
 @channel_required
@@ -241,7 +242,7 @@ def tag_create(request, group_pk):
             tag.save()
         except Exception:
             messages.error(request, "ชื่อแท็กซ้ำในกลุ่มนี้")
-    return redirect(f"/settings/tags/?group={group.pk}")
+    return redirect(reverse("catalog:tags") + f"?group={group.pk}")
 
 
 @channel_required
@@ -254,7 +255,7 @@ def tag_update(request, pk):
     if request.POST.get("color"):
         tag.color = request.POST["color"]
     tag.save()
-    return redirect(f"/settings/tags/?group={tag.group_id}&tag={tag.pk}")
+    return redirect(reverse("catalog:tags") + f"?group={tag.group_id}&tag={tag.pk}")
 
 
 @channel_required
@@ -264,7 +265,7 @@ def tag_delete(request, pk):
     gid = tag.group_id
     tag.delete()
     messages.success(request, "ลบแท็กแล้ว")
-    return redirect(f"/settings/tags/?group={gid}")
+    return redirect(reverse("catalog:tags") + f"?group={gid}")
 
 
 @channel_required

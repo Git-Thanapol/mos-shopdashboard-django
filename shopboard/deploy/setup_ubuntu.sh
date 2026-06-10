@@ -3,18 +3,28 @@
 # (nginx + gunicorn + PostgreSQL). Safe to re-run: every step is idempotent.
 #
 # Usage (as root, e.g. via sudo):
-#   ./setup_ubuntu.sh <server_name> [repo_url]
+#   ./setup_ubuntu.sh <server_name> [repo_url] [url_prefix]
 #
 #   server_name  domain or IP nginx should answer on (e.g. dashboard.example.com)
-#   repo_url     git URL to clone. Omit if the code is already at /srv/shopboard/app
-#                (e.g. uploaded with rsync/scp).
+#   repo_url     git URL to clone. Pass "" if the code is already at
+#                /srv/shopboard/app (e.g. uploaded with rsync/scp).
+#   url_prefix   optional sub-path to serve the app under, e.g. /new_shop
+#                (the site then lives at http://server_name/new_shop/)
 #
 # After it finishes: edit /srv/shopboard/app/shopboard/.env (SMTP, admin password),
 # then run deploy/deploy.sh. Full walkthrough in DEPLOY.md.
 set -euo pipefail
 
-SERVER_NAME="${1:?usage: setup_ubuntu.sh <server_name> [repo_url]}"
+SERVER_NAME="${1:?usage: setup_ubuntu.sh <server_name> [repo_url] [url_prefix]}"
 REPO_URL="${2:-}"
+URL_PREFIX="${3:-}"
+
+if [ -n "$URL_PREFIX" ]; then
+    case "$URL_PREFIX" in
+        /*[!/]) ;;  # must start with / and not end with /
+        *) echo "url_prefix must look like /new_shop (leading slash, no trailing slash)"; exit 1 ;;
+    esac
+fi
 
 APP_ROOT=/srv/shopboard
 APP_DIR=$APP_ROOT/app            # repo checkout
@@ -102,8 +112,10 @@ DJANGO_DEBUG=0
 SECRET_KEY=$SECRET
 ALLOWED_HOSTS=$SERVER_NAME
 DATABASE_URL=postgres://shopboard:$DB_PASS@127.0.0.1:$DB_PORT/shopboard
-CSRF_TRUSTED_ORIGINS=https://$SERVER_NAME
+CSRF_TRUSTED_ORIGINS=http://$SERVER_NAME,https://$SERVER_NAME
 # USE_HTTPS=1   # uncomment after certbot
+STATIC_URL=$URL_PREFIX/static/
+MEDIA_URL=$URL_PREFIX/media/
 
 DJANGO_SUPERUSER_USERNAME=admin
 DJANGO_SUPERUSER_EMAIL=admin@example.com
@@ -127,6 +139,8 @@ else
     echo "    $ENV_FILE already exists — left untouched"
     grep -q "127.0.0.1:$DB_PORT/" "$ENV_FILE" \
         || echo "    WARNING: DATABASE_URL in .env does not point at port $DB_PORT — update it manually"
+    grep -q "^STATIC_URL=$URL_PREFIX/static/" "$ENV_FILE" \
+        || echo "    WARNING: set STATIC_URL=$URL_PREFIX/static/ and MEDIA_URL=$URL_PREFIX/media/ in .env, then restart shopboard"
 fi
 
 echo "==> Permissions"
@@ -145,15 +159,59 @@ systemctl enable --now shopboard
 systemctl restart shopboard
 
 echo "==> nginx site"
-sed "s/SERVER_NAME/$SERVER_NAME/" "$PROJ_DIR/deploy/nginx-shopboard.conf" > /etc/nginx/sites-available/shopboard
-ln -sf /etc/nginx/sites-available/shopboard /etc/nginx/sites-enabled/shopboard
-rm -f /etc/nginx/sites-enabled/default
+# don't fight a hand-managed config: if another enabled site already answers
+# for this server_name (shared nginx with other apps), leave nginx alone
+EXISTING=$(grep -rls "server_name $SERVER_NAME;" /etc/nginx/sites-enabled/ 2>/dev/null | grep -v '/shopboard$' || true)
+if [ -n "$EXISTING" ]; then
+    echo "    $EXISTING already serves $SERVER_NAME — skipping nginx config."
+    echo "    Add the shopboard location blocks there yourself (see DEPLOY.md 'Shared nginx')."
+else
+    if [ -n "$URL_PREFIX" ]; then
+        # gunicorn honors the SCRIPT_NAME header: Django strips the prefix from
+        # PATH_INFO and prepends it to every reversed URL automatically
+        SCRIPT_NAME_HEADER="proxy_set_header SCRIPT_NAME $URL_PREFIX;"
+        PREFIX_REDIRECT="location = $URL_PREFIX { return 301 $URL_PREFIX/; }"
+    else
+        SCRIPT_NAME_HEADER=""
+        PREFIX_REDIRECT=""
+    fi
+    cat > /etc/nginx/sites-available/shopboard <<EOF
+server {
+    listen 80;
+    server_name $SERVER_NAME;
+    client_max_body_size 50M;
+
+    location $URL_PREFIX/static/ {
+        alias $PROJ_DIR/staticfiles/;
+        access_log off;
+        expires 7d;
+    }
+
+    location $URL_PREFIX/media/ {
+        alias $PROJ_DIR/media/;
+    }
+
+    $PREFIX_REDIRECT
+    location $URL_PREFIX/ {
+        proxy_pass http://unix:/run/shopboard/gunicorn.sock;
+        $SCRIPT_NAME_HEADER
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 120s;
+    }
+}
+EOF
+    ln -sf /etc/nginx/sites-available/shopboard /etc/nginx/sites-enabled/shopboard
+    rm -f /etc/nginx/sites-enabled/default
+fi
 nginx -t
 systemctl reload nginx
 
 echo
 echo "DONE. Next steps:"
 echo "  1. Fill SMTP credentials in $ENV_FILE, then: systemctl restart shopboard"
-echo "  2. Open http://$SERVER_NAME/ and log in as 'admin'"
+echo "  2. Open http://$SERVER_NAME$URL_PREFIX/ and log in as 'admin'"
 echo "  3. (recommended) TLS: apt install certbot python3-certbot-nginx && certbot --nginx -d $SERVER_NAME"
 echo "     then set USE_HTTPS=1 in .env and: systemctl restart shopboard"

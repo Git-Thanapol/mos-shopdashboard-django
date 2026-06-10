@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.core import channels
@@ -48,7 +49,7 @@ def shop_create(request):
         messages.success(request, f"เพิ่มร้าน {name} แล้ว")
     else:
         messages.warning(request, f"ร้าน {name} มีอยู่แล้ว")
-    return redirect(f"/data/files/?shop={shop.pk}")
+    return redirect(reverse("ingest:file_manager") + f"?shop={shop.pk}")
 
 
 @channel_required
@@ -80,7 +81,7 @@ def upload(request, shop_pk, kind):
             messages.warning(request, str(e))
     if request.headers.get("HX-Request"):
         return render(request, "ingest/_file_rows.html", {"files": results, "shop": shop})
-    return redirect(f"/data/files/?shop={shop.pk}")
+    return redirect(reverse("ingest:file_manager") + f"?shop={shop.pk}")
 
 
 @channel_required
