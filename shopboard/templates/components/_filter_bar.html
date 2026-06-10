@@ -9,7 +9,7 @@
             <a class="btn btn-secondary btn-sm" href="?{{ f.querystring }}&date={{ daily_prev|date:'Y-m-d' }}">◀</a>
             <input class="input input-sm" type="date" name="date" value="{{ daily_day|date:'Y-m-d' }}" onchange="this.form.submit()">
             <a class="btn btn-secondary btn-sm" href="?{{ f.querystring }}&date={{ daily_next|date:'Y-m-d' }}">▶</a>
-            <span class="hint">{{ daily_label }}</span>
+            <p class="hint">{{ daily_label }}</p>
         </div>
         {% else %}
         <div class="filter-group">
