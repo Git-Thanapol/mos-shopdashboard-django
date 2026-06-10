@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}ตั้งค่าสินค้า (Master) — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔧 ตั้งค่าสินค้า (Master) <span class="count-badge">{{ total }} รายการ</span></h1>
+</div>
+
+<div class="toolbar card">
+    <form class="toolbar-row" method="get">
+        <input class="input" type="search" name="q" value="{{ q }}" placeholder="ค้นหา SKU / ชื่อสินค้า"
+               hx-get="{% url 'catalog:master_rows' %}" hx-trigger="input changed delay:300ms"
+               hx-target="#master-table" hx-include="[name='cat']">
+        <select class="input" name="cat"
+                hx-get="{% url 'catalog:master_rows' %}" hx-trigger="change"
+                hx-target="#master-table" hx-include="[name='q']">
+            <option value="">ทุกหมวดหมู่</option>
+            {% for t in types %}<option value="{{ t }}" {% if t == cat %}selected{% endif %}>{{ t }}</option>{% endfor %}
+        </select>
+    </form>
+    <div class="toolbar-row">
+        <form method="post" action="{% url 'catalog:master_import' %}" enctype="multipart/form-data" class="inline-form">
+            {% csrf_token %}
+            <input type="file" name="file" accept=".xlsx,.xls" required class="file-input">
+            <button class="btn btn-secondary" type="submit">📥 นำเข้าไฟล์ Excel</button>
+        </form>
+        {% if not is_test_channel %}
+        <form method="post" action="{% url 'catalog:master_import_sheet' %}" class="inline-form">
+            {% csrf_token %}
+            <button class="btn btn-secondary" type="submit">☁️ ดึงจาก Google Sheet</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<details class="card add-panel">
+    <summary>➕ เพิ่มสินค้าใหม่{% if is_test_channel %} (ทดสอบ){% endif %}</summary>
+    <form method="post" action="{% url 'catalog:master_create' %}" class="master-form-grid">
+        {% csrf_token %}
+        {% for field in create_form %}
+        <label class="form-cell">
+            <span>{{ field.label }}</span>
+            {{ field }}
+        </label>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">บันทึก</button>
+    </form>
+</details>
+
+<datalist id="type-options">
+    {% for t in types %}<option value="{{ t }}">{% endfor %}
+</datalist>
+
+<div id="master-table" class="card table-card">
+    {% include "catalog/_master_table.html" %}
+</div>
+{% endblock %}

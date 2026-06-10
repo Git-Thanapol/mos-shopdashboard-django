@@ -1,0 +1,36 @@
+<div class="table-scroll">
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>ชื่อสินค้า</th>
+            <th>หมวดหมู่</th>
+            <th class="num">ต้นทุน</th>
+            <th class="num">กล่อง</th>
+            <th class="num">ค่าส่ง</th>
+            <th class="num">คอม Admin %</th>
+            <th class="num">คอม Tele %</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in page %}
+            {% include "catalog/_master_row.html" %}
+        {% empty %}
+            <tr><td colspan="9" class="empty-cell">ไม่พบสินค้า</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+{% if page.has_other_pages %}
+<div class="pagination">
+    {% if page.has_previous %}
+        <a hx-get="{% url 'catalog:master_rows' %}?page={{ page.previous_page_number }}&q={{ q|urlencode }}&cat={{ cat|urlencode }}" hx-target="#master-table" href="#">← ก่อนหน้า</a>
+    {% endif %}
+    <span>หน้า {{ page.number }} / {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+        <a hx-get="{% url 'catalog:master_rows' %}?page={{ page.next_page_number }}&q={{ q|urlencode }}&cat={{ cat|urlencode }}" hx-target="#master-table" href="#">ถัดไป →</a>
+    {% endif %}
+</div>
+{% endif %}

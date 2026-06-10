@@ -47,8 +47,8 @@
                 <button class="nav-item" @click="open = open === 'settings' ? null : 'settings'">⚙️ ตั้งค่า ▾</button>
                 <div class="nav-dropdown" x-show="open === 'settings'" x-cloak>
                     <a href="#">จัดการไฟล์ / นำเข้าข้อมูล</a>
-                    <a href="#">ตั้งค่าสินค้า (Master)</a>
-                    <a href="#">จัดการแท็กสินค้า</a>
+                    <a href="{% url 'catalog:master_items' %}">ตั้งค่าสินค้า (Master)</a>
+                    <a href="{% url 'catalog:tags' %}">จัดการแท็กสินค้า</a>
                     {% if user.is_staff %}<a href="{% url 'admin:index' %}">ผู้ใช้งาน (Admin)</a>{% endif %}
                 </div>
             </div>

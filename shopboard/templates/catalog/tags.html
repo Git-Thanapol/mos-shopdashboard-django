@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}จัดการแท็กสินค้า — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🏷️ จัดการแท็กสินค้า</h1>
+</div>
+
+<div class="tags-layout">
+    <!-- left: groups -->
+    <div class="card tags-pane">
+        <h2 class="pane-title">กลุ่มแท็ก</h2>
+        <ul class="group-list">
+            {% for g in groups %}
+            <li class="{% if g == selected_group %}active{% endif %}">
+                <a href="?group={{ g.pk }}">
+                    <span class="color-dot" style="background: {{ g.color }}"></span>
+                    {{ g.name }} <span class="count-badge">{{ g.tag_count }}</span>
+                </a>
+                <form method="post" action="{% url 'catalog:group_delete' g.pk %}" class="inline-form"
+                      onsubmit="return confirm('ลบกลุ่ม {{ g.name }} และแท็กทั้งหมดในกลุ่ม?')">
+                    {% csrf_token %}
+                    <button class="btn-icon" title="ลบกลุ่ม">🗑️</button>
+                </form>
+            </li>
+            {% empty %}
+            <li class="empty-cell">ยังไม่มีกลุ่มแท็ก</li>
+            {% endfor %}
+        </ul>
+        <form method="post" action="{% url 'catalog:group_create' %}" class="stack-form">
+            {% csrf_token %}
+            {{ group_form.name }}
+            {{ group_form.color }}
+            <button class="btn btn-secondary btn-sm" type="submit">➕ เพิ่มกลุ่ม</button>
+        </form>
+    </div>
+
+    <!-- middle: tags in group -->
+    <div class="card tags-pane">
+        <h2 class="pane-title">แท็กในกลุ่ม{% if selected_group %}: {{ selected_group.name }}{% endif %}</h2>
+        {% if selected_group %}
+        <ul class="group-list">
+            {% for t in tags %}
+            <li class="{% if t == selected_tag %}active{% endif %}">
+                <a href="?group={{ selected_group.pk }}&tag={{ t.pk }}">
+                    <span class="color-dot" style="background: {{ t.color|default:selected_group.color }}"></span>
+                    {{ t.name }} <span class="count-badge">{{ t.product_count }}</span>
+                </a>
+                <form method="post" action="{% url 'catalog:tag_delete' t.pk %}" class="inline-form"
+                      onsubmit="return confirm('ลบแท็ก {{ t.name }}? ใช้กับสินค้า {{ t.product_count }} รายการ')">
+                    {% csrf_token %}
+                    <button class="btn-icon" title="ลบแท็ก">🗑️</button>
+                </form>
+            </li>
+            {% empty %}
+            <li class="empty-cell">ยังไม่มีแท็กในกลุ่มนี้</li>
+            {% endfor %}
+        </ul>
+        <form method="post" action="{% url 'catalog:tag_create' selected_group.pk %}" class="stack-form">
+            {% csrf_token %}
+            {{ tag_form.name }}
+            {{ tag_form.color }}
+            <button class="btn btn-secondary btn-sm" type="submit">➕ เพิ่มแท็ก</button>
+        </form>
+        {% else %}
+        <p class="empty-cell">เลือกหรือสร้างกลุ่มแท็กก่อน</p>
+        {% endif %}
+    </div>
+
+    <!-- right: assign products -->
+    <div class="card tags-pane tags-pane-wide">
+        <h2 class="pane-title">
+            กำหนดสินค้า{% if selected_tag %}: <span class="tag-chip" style="border-color: {{ selected_tag.color|default:selected_group.color }}">{{ selected_tag.name }}</span>{% endif %}
+        </h2>
+        {% if selected_tag %}
+        <p class="hint" id="assign-count">ใช้กับสินค้า {{ assigned_skus|length }} รายการ</p>
+        <form method="get" class="stack-form">
+            <input type="hidden" name="group" value="{{ selected_group.pk }}">
+            <input type="hidden" name="tag" value="{{ selected_tag.pk }}">
+            <input class="input input-sm" type="search" name="sku_q" value="{{ sku_q }}" placeholder="ค้นหา SKU / ชื่อสินค้า">
+        </form>
+        <ul class="assign-list">
+            {% for item in assign_items %}
+            <li>
+                <label class="check-label">
+                    <input type="checkbox"
+                           {% if item.sku in assigned_skus %}checked{% endif %}
+                           hx-post="{% url 'catalog:tag_toggle_sku' selected_tag.pk %}"
+                           hx-vals='js:{"sku": "{{ item.sku|escapejs }}", "checked": event.target.checked}'
+                           hx-target="#assign-count" hx-swap="innerHTML">
+                    <span class="mono">{{ item.sku }}</span> — {{ item.name|truncatechars:45 }}
+                </label>
+            </li>
+            {% empty %}
+            <li class="empty-cell">ไม่พบสินค้าในช่องทางนี้</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-cell">เลือกแท็กเพื่อกำหนดสินค้า</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

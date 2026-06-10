@@ -361,3 +361,62 @@ a { color: var(--accent); text-decoration: none; }
 /* ---------- numbers ---------- */
 .num { font-variant-numeric: tabular-nums; text-align: right; }
 .neg { color: var(--c-neg); font-weight: 700; }
+
+/* ---------- toolbar & forms ---------- */
+.toolbar { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; margin-bottom: 14px; }
+.toolbar-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.inline-form { display: inline-flex; gap: 8px; align-items: center; }
+.stack-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.input-sm { padding: 7px 10px; font-size: 13px; }
+.file-input { color: var(--text-dim); font-size: 13px; max-width: 220px; }
+.color-input { width: 44px; height: 32px; padding: 2px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; }
+.btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 7px 12px; font-size: 13px; }
+.btn-icon { background: none; border: none; cursor: pointer; font-size: 14px; opacity: 0.7; }
+.btn-icon:hover { opacity: 1; }
+.count-badge { font-size: 12px; color: var(--text-dim); font-weight: 400; }
+.hint { font-size: 13px; color: var(--text-dim); }
+.field-error { color: var(--c-neg); font-size: 12px; font-style: normal; }
+
+.add-panel { margin-bottom: 14px; }
+.add-panel summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.master-form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; }
+.form-cell { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-dim); }
+.form-actions { flex-direction: row; align-items: flex-end; gap: 8px; }
+
+/* ---------- data table ---------- */
+.table-card { padding: 0; overflow: hidden; }
+.table-scroll { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th {
+    position: sticky; top: 0;
+    background: var(--surface-2);
+    text-align: left; padding: 10px 12px;
+    font-weight: 600; font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+.data-table th.num { text-align: right; }
+.data-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.data-table tbody tr:hover { background: var(--surface-2); }
+.data-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.015); }
+.row-editing td { background: var(--accent-soft); }
+.row-actions { white-space: nowrap; text-align: right; }
+.empty-cell { text-align: center; color: var(--text-dim); padding: 28px !important; }
+.mono { font-variant-numeric: tabular-nums; }
+.pagination { display: flex; gap: 16px; justify-content: center; padding: 12px; color: var(--text-dim); font-size: 14px; }
+
+/* ---------- tags page ---------- */
+.tags-layout { display: grid; grid-template-columns: 1fr 1fr 1.6fr; gap: 14px; align-items: start; }
+@media (max-width: 1000px) { .tags-layout { grid-template-columns: 1fr; } }
+.pane-title { font-size: 16px; margin: 0 0 10px; }
+.group-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.group-list li { display: flex; align-items: center; justify-content: space-between; border-radius: 8px; padding: 2px 6px; }
+.group-list li.active { background: var(--accent-soft); }
+.group-list li a { display: flex; align-items: center; gap: 8px; padding: 8px 6px; color: var(--text); flex: 1; }
+.color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.tag-chip { border: 1px solid; border-radius: 99px; padding: 2px 10px; font-size: 13px; }
+.assign-list { list-style: none; margin: 10px 0 0; padding: 0; max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.assign-list .check-label { margin: 0; padding: 6px; border-radius: 6px; }
+.assign-list .check-label:hover { background: var(--surface-2); }

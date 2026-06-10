@@ -1,0 +1,19 @@
+<tr id="master-row-{{ item.pk }}">
+    <td class="mono">{{ item.sku }}</td>
+    <td>{{ item.name|truncatechars:60 }}</td>
+    <td>{{ item.type }}</td>
+    <td class="num">{{ item.cost|floatformat:2 }}</td>
+    <td class="num">{{ item.box_cost|floatformat:2 }}</td>
+    <td class="num">{{ item.delivery_cost|floatformat:2 }}</td>
+    <td class="num">{{ item.com_admin_pct|floatformat:2 }}</td>
+    <td class="num">{{ item.com_tele_pct|floatformat:2 }}</td>
+    <td class="row-actions">
+        <button class="btn-icon" title="แก้ไข"
+                hx-get="{% url 'catalog:master_edit' item.pk %}"
+                hx-target="#master-row-{{ item.pk }}" hx-swap="outerHTML">✏️</button>
+        <button class="btn-icon" title="ลบ"
+                hx-post="{% url 'catalog:master_delete' item.pk %}"
+                hx-confirm="ลบสินค้า {{ item.sku }} ?"
+                hx-target="#master-row-{{ item.pk }}" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
