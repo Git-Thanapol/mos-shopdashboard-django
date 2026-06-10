@@ -77,8 +77,10 @@
             headerClass: "agx-hdr-" + (c.hdr || "blue"),
             sortable: c.type !== "text" || !!c.sortText,
             resizable: true,
-            minWidth: c.width || 80,
-            width: c.width,
+            // columns auto-fit their content (autoSizeStrategy fitCellContents);
+            // floor/cap keep degenerate content from collapsing or exploding them
+            minWidth: 70,
+            maxWidth: c.type === "text" ? 420 : 190,
             suppressMovable: true,
             valueFormatter: function (p) { return fmtValue(c.type, p.value); },
             cellClass: function (p) {
@@ -133,6 +135,7 @@
             suppressCellFocus: true,
             enableCellTextSelection: true,
             tooltipShowDelay: 300,
+            autoSizeStrategy: { type: "fitCellContents" },
             defaultColDef: { suppressHeaderMenuButton: true },
             getRowStyle: function (p) {
                 if (p.node.rowPinned && p.data && p.data.rtype) {
@@ -143,11 +146,6 @@
                     };
                 }
                 return null;
-            },
-            onGridReady: function (p) {
-                if (cfg.rows.length && cfg.columns.length <= 16) {
-                    p.api.sizeColumnsToFit();
-                }
             },
         };
 

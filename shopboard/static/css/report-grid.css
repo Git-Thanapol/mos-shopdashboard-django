@@ -1,5 +1,6 @@
 /* AG Grid skin = the legacy Streamlit table palette (ui_components.py:88-190).
-   Same design/layout/colors on every report table. */
+   Same design/layout/colors on every report table.
+   Mount divs use: class="ag-theme-quartz-dark legacy-grid grid-box" */
 
 .legacy-grid {
     --ag-background-color: #1c1c1c;
@@ -12,9 +13,10 @@
     --ag-row-border-color: #333333;
     --ag-pinned-column-border: solid 1px #444444;
     --ag-font-family: "Sarabun", system-ui, sans-serif;
-    --ag-font-size: 12px;
-    --ag-cell-horizontal-padding: 6px;
+    --ag-font-size: 13px;
+    --ag-cell-horizontal-padding: 8px;
     --ag-borders: solid 1px;
+    font-family: "Sarabun", system-ui, sans-serif;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -24,8 +26,13 @@
 
 .grid-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 8px; }
 
+/* deterministic dark banded rows — legacy custom-table zebra (#1c1c1c / #262626) */
+.legacy-grid .ag-row-even { background-color: #1c1c1c; }
+.legacy-grid .ag-row-odd { background-color: #262626; }
+.legacy-grid .ag-row-hover { background-color: #333333; }
+
 /* header group colors (legacy fix-m-* header overrides) */
-.legacy-grid .ag-header-cell { font-weight: 700; }
+.legacy-grid .ag-header-cell { font-weight: 700; font-size: 13px; }
 .legacy-grid .agx-hdr-slate  { background-color: #2c3e50; }
 .legacy-grid .agx-hdr-green  { background-color: #27ae60; }
 .legacy-grid .agx-hdr-orange { background-color: #e67e22; }
@@ -35,11 +42,11 @@
 .legacy-grid .agx-hdr-teal   { background-color: #176f98; }
 
 /* two-line SKU header (legacy th-sku + .sku-header) */
-.agx-two-line { line-height: 1.15; text-align: center; width: 100%; }
-.agx-h-main { font-weight: 700; font-size: 12px; color: #fff; }
-.agx-h-sub { font-weight: 400; font-size: 10px; color: #d6eaf8; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
+.agx-two-line { line-height: 1.2; text-align: center; width: 100%; }
+.agx-h-main { font-weight: 700; font-size: 13px; color: #fff; }
+.agx-h-sub { font-weight: 400; font-size: 11px; color: #d6eaf8; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 auto; }
 
-/* cells — legacy custom-table is centered, 11-12px */
+/* cells — legacy custom-table is centered; size inherits --ag-font-size */
 .legacy-grid .agx-cell { text-align: center; }
 .legacy-grid .agx-num { font-variant-numeric: tabular-nums; }
 .legacy-grid .agx-text { text-align: left; }

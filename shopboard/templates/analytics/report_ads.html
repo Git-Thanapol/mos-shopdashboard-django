@@ -36,13 +36,13 @@
 <div class="grid-toolbar">
     <button id="grid-campaigns-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
-<div id="grid-campaigns" class="ag-theme-quartz legacy-grid grid-box"></div>
+<div id="grid-campaigns" class="ag-theme-quartz-dark legacy-grid grid-box"></div>
 {{ campaign_grid_json|json_script:"grid-campaigns-data" }}
 {% else %}
 <div class="grid-toolbar">
     <button id="grid-ads-export" class="btn btn-secondary btn-sm">⬇️ ดาวน์โหลด CSV</button>
 </div>
-<div id="grid-ads" class="ag-theme-quartz legacy-grid grid-box"></div>
+<div id="grid-ads" class="ag-theme-quartz-dark legacy-grid grid-box"></div>
 {{ grid_json|json_script:"grid-ads-data" }}
 {% endif %}
 {% endblock %}
