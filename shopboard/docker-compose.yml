@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-shopboard}
+      POSTGRES_USER: ${POSTGRES_USER:-shopboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shopboard}
+    # 5432 on this host is taken by the legacy profit_income_db container
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_shopboard:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shopboard} -d ${POSTGRES_DB:-shopboard}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    env_file: .env
+    volumes:
+      - .:/app
+      - media:/app/media
+      # legacy Excel files for the import_legacy management command (read-only)
+      - ../shop_dashboard_Streamlit_Sample/local_data:/legacy_data:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/shopboard.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./staticfiles:/srv/static:ro
+      - media:/srv/media:ro
+    depends_on:
+      - web
+
+  # worker: (not needed at current scale — see migration plan §4.3)
+  #   build: .
+  #   command: python manage.py run_worker
+
+volumes:
+  pgdata_shopboard:
+  media:

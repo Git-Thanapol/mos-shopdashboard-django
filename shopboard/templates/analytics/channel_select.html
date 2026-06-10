@@ -1,0 +1,36 @@
+{% extends "base_auth.html" %}
+
+{% block title %}เลือกช่องทาง — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="channel-select">
+    <h1 class="auth-title">เลือกช่องทางการทำงาน</h1>
+    <p class="auth-sub">ข้อมูลของสองช่องทางแยกจากกันโดยสมบูรณ์</p>
+
+    <div class="channel-cards">
+        <form method="post" action="{% url 'analytics:channel_activate' %}">
+            {% csrf_token %}
+            <input type="hidden" name="channel" value="LIVE">
+            <button type="submit" class="channel-card channel-card-live">
+                <span class="channel-icon">🏪</span>
+                <span class="channel-name">ร้านค้าจริง</span>
+                <span class="channel-desc">ยอดขาย กำไร และรายงานของสินค้าที่วางขายจริง</span>
+            </button>
+        </form>
+        <form method="post" action="{% url 'analytics:channel_activate' %}">
+            {% csrf_token %}
+            <input type="hidden" name="channel" value="TEST">
+            <button type="submit" class="channel-card channel-card-test">
+                <span class="channel-icon">🧪</span>
+                <span class="channel-name">สินค้าทดสอบ</span>
+                <span class="channel-desc">สินค้าที่อยู่ระหว่างทดลองตลาด ยังไม่วางขายจริง</span>
+            </button>
+        </form>
+    </div>
+
+    <form method="post" action="{% url 'accounts:logout' %}" class="channel-logout">
+        {% csrf_token %}
+        <button type="submit" class="btn-link">🚪 ออกจากระบบ</button>
+    </form>
+</div>
+{% endblock %}

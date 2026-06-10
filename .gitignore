@@ -1,0 +1,29 @@
+# Secrets & environment
+.env
+*.env
+!.env.example
+secrets.toml
+service_account.json
+
+# Real business data (kept local only)
+shop_dashboard_Streamlit_Sample/local_data/
+media/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Django
+staticfiles/
+db.sqlite3
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Claude Code local state
+.claude/

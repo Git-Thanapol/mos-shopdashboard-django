@@ -1,0 +1,32 @@
+{% extends "base_auth.html" %}
+
+{% block title %}ยืนยันรหัส OTP — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-logo">🔐</div>
+    <h1 class="auth-title">ยืนยันตัวตน</h1>
+    <p class="auth-sub">เราส่งรหัส 6 หลักไปที่ <strong>{{ masked_email }}</strong><br>รหัสมีอายุ 5 นาที</p>
+
+    {% if form.code.errors %}
+        <div class="alert alert-error">{{ form.code.errors.0 }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.code }}
+        <label class="check-label">
+            <input type="checkbox" name="remember_device" checked>
+            จดจำอุปกรณ์นี้ 30 วัน (ไม่ต้องกรอกรหัสอีก)
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">ยืนยัน</button>
+    </form>
+
+    <form method="post" action="{% url 'accounts:otp_resend' %}" class="resend-form">
+        {% csrf_token %}
+        <button type="submit" class="btn-link">ส่งรหัสอีกครั้ง</button>
+    </form>
+
+    <a class="btn-link auth-back" href="{% url 'accounts:login' %}">← กลับไปหน้าเข้าสู่ระบบ</a>
+</div>
+{% endblock %}

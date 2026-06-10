@@ -1,0 +1,89 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Shop Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/fonts.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
+    <script src="{% static 'vendor/alpine.min.js' %}" defer></script>
+    <script src="{% static 'vendor/echarts.min.js' %}"></script>
+</head>
+<body {% if is_test_channel %}data-channel="TEST"{% endif %} hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+<nav class="topnav">
+    <div class="topnav-inner">
+        <a class="brand" href="{% url 'analytics:home' %}">
+            {% if is_test_channel %}🧪{% else %}📊{% endif %}
+            <span>Shop Dashboard</span>
+            <span class="channel-badge">{{ channel_label }}</span>
+        </a>
+
+        <div class="nav-links" x-data="{open: null}" @click.outside="open = null">
+            <a class="nav-item" href="{% url 'analytics:home' %}">🏠 ภาพรวม</a>
+
+            <div class="nav-group">
+                <button class="nav-item" @click="open = open === 'reports' ? null : 'reports'">📊 รายงาน ▾</button>
+                <div class="nav-dropdown" x-show="open === 'reports'" x-cloak>
+                    <a href="#">รายงานรายเดือน</a>
+                    <a href="#">รายงานรายวัน</a>
+                    <a href="#">รายงานค่าโฆษณา</a>
+                    <a href="#">กราฟสินค้า</a>
+                    <a href="#">ค่าคอมมิชชั่น</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-item" @click="open = open === 'pnl' ? null : 'pnl'">📈 งบกำไรขาดทุน ▾</button>
+                <div class="nav-dropdown" x-show="open === 'pnl'" x-cloak>
+                    <a href="#">รายปี</a>
+                    <a href="#">รายเดือน</a>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <button class="nav-item" @click="open = open === 'settings' ? null : 'settings'">⚙️ ตั้งค่า ▾</button>
+                <div class="nav-dropdown" x-show="open === 'settings'" x-cloak>
+                    <a href="#">จัดการไฟล์ / นำเข้าข้อมูล</a>
+                    <a href="#">ตั้งค่าสินค้า (Master)</a>
+                    <a href="#">จัดการแท็กสินค้า</a>
+                    {% if user.is_staff %}<a href="{% url 'admin:index' %}">ผู้ใช้งาน (Admin)</a>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-right" x-data="{open: false}" @click.outside="open = false">
+            <a class="channel-switch" href="{% url 'analytics:channel_select' %}" title="สลับช่องทาง">
+                {% if is_test_channel %}🧪 ทดสอบ{% else %}🏪 ขายจริง{% endif %} ⇄
+            </a>
+            <button class="nav-item user-menu" @click="open = !open">👤 {{ user.get_username }} ▾</button>
+            <div class="nav-dropdown nav-dropdown-right" x-show="open" x-cloak>
+                <form method="post" action="{% url 'accounts:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-btn">🚪 ออกจากระบบ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% if is_test_channel %}
+    <div class="test-banner">🧪 โหมดสินค้าทดสอบ — ข้อมูลในหน้านี้แยกจากร้านค้าจริงทั้งหมด</div>
+    {% endif %}
+</nav>
+
+<main class="page">
+    {% block content %}{% endblock %}
+</main>
+
+<div class="toast-stack" id="toast-stack">
+    {% for message in messages %}
+    <div class="toast toast-{{ message.tags }}" x-data="{show: true}" x-show="show" x-init="setTimeout(() => show = false, 5000)">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

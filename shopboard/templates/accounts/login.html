@@ -1,0 +1,24 @@
+{% extends "base_auth.html" %}
+
+{% block title %}เข้าสู่ระบบ — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-logo">📊</div>
+    <h1 class="auth-title">Shop Analytics Dashboard</h1>
+    <p class="auth-sub">เข้าสู่ระบบเพื่อใช้งาน</p>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-error">{{ form.non_field_errors.0 }}</div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+        <label class="field-label" for="{{ form.username.id_for_label }}">ชื่อผู้ใช้</label>
+        {{ form.username }}
+        <label class="field-label" for="{{ form.password.id_for_label }}">รหัสผ่าน</label>
+        {{ form.password }}
+        <button type="submit" class="btn btn-primary btn-block">เข้าสู่ระบบ</button>
+    </form>
+</div>
+{% endblock %}

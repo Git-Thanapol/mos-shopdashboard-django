@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}ภาพรวม — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>ภาพรวม{% if is_test_channel %}สินค้าทดสอบ{% else %}ร้านค้า{% endif %}</h1>
+</div>
+
+<div class="empty-state">
+    <div class="empty-icon">🚧</div>
+    <p>แดชบอร์ดอยู่ระหว่างการพัฒนา (Phase 5)</p>
+    <p class="empty-sub">ระบบเข้าสู่ระบบและการแยกช่องทาง ทดสอบ/ขายจริง พร้อมใช้งานแล้ว</p>
+</div>
+{% endblock %}
