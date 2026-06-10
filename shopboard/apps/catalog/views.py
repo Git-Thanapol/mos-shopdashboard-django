@@ -195,9 +195,13 @@ def _assign_context(request, tag):
 def group_create(request):
     form = TagGroupForm(request.POST)
     if form.is_valid():
-        form.save()
-    else:
-        messages.error(request, "เพิ่มกลุ่มไม่สำเร็จ (ชื่ออาจซ้ำ)")
+        group = form.save()
+        messages.success(request, f"เพิ่มกลุ่ม {group.name} แล้ว")
+        return redirect(f"/settings/tags/?group={group.pk}")
+    messages.error(
+        request,
+        "เพิ่มกลุ่มไม่สำเร็จ: " + "; ".join(e for errs in form.errors.values() for e in errs),
+    )
     return redirect("catalog:tags")
 
 
