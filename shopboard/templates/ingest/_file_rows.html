@@ -1,0 +1,27 @@
+{% for f in files %}
+<tr id="file-row-{{ f.pk }}">
+    <td>{{ f.original_name|truncatechars:50 }}</td>
+    <td>{{ f.get_kind_display }}</td>
+    <td class="num">{{ f.row_count }}</td>
+    <td>{% if f.date_min %}{{ f.date_min }} – {{ f.date_max }}{% else %}-{% endif %}</td>
+    <td>
+        {% if f.status == "PROCESSED" %}
+            <span class="status-chip ok">✅ นำเข้าแล้ว</span>
+        {% elif f.status == "ERROR" %}
+            <button class="status-chip err btn-chip" hx-get="{% url 'ingest:file_detail' f.pk %}"
+                    hx-target="#file-row-{{ f.pk }}" hx-swap="afterend">❌ ล้มเหลว (ดูรายละเอียด)</button>
+        {% else %}
+            <span class="status-chip pending">⏳ กำลังประมวลผล</span>
+        {% endif %}
+    </td>
+    <td>{{ f.uploaded_at|date:"d/m/Y H:i" }}</td>
+    <td class="row-actions">
+        <button class="btn-icon" title="ลบไฟล์และข้อมูล"
+                hx-post="{% url 'ingest:file_delete' f.pk %}"
+                hx-confirm="ลบไฟล์ {{ f.original_name }} และข้อมูล {{ f.row_count }} แถว?"
+                hx-target="#file-row-{{ f.pk }}" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="7" class="empty-cell">ยังไม่มีไฟล์ในร้านนี้</td></tr>
+{% endfor %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}จัดการไฟล์ — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📂 จัดการไฟล์ / นำเข้าข้อมูล</h1>
+    <a class="btn-link" href="{% url 'ingest:import_history' %}">🕘 ประวัติการนำเข้า →</a>
+</div>
+
+<div class="toolbar card">
+    <div class="toolbar-row">
+        <span>ร้านค้า:</span>
+        {% for s in shops %}
+            <a class="shop-chip {% if s == shop %}active{% endif %}" href="?shop={{ s.pk }}">{{ s.name }}</a>
+        {% empty %}
+            <span class="hint">ยังไม่มีร้านค้าในช่องทางนี้</span>
+        {% endfor %}
+    </div>
+    <div class="toolbar-row">
+        <form method="post" action="{% url 'ingest:shop_create' %}" class="inline-form">
+            {% csrf_token %}
+            <input class="input input-sm" name="name" placeholder="ชื่อร้านใหม่{% if is_test_channel %} (ทดสอบ){% endif %}" required>
+            <button class="btn btn-secondary btn-sm" type="submit">➕ เพิ่มร้านค้า</button>
+        </form>
+        {% if shop %}
+        <form method="post" action="{% url 'ingest:shop_delete' shop.pk %}" class="inline-form"
+              onsubmit="return confirm('ลบร้าน {{ shop.name }} และข้อมูลทั้งหมดของร้านนี้?')">
+            {% csrf_token %}
+            <button class="btn btn-secondary btn-sm" type="submit">🗑️ ลบร้านนี้</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if shop %}
+<div class="upload-zones">
+    <form class="card dropzone" method="post" enctype="multipart/form-data"
+          action="{% url 'ingest:upload' shop.pk 'SALES' %}">
+        {% csrf_token %}
+        <h2>🛒 ไฟล์ยอดขาย</h2>
+        <input type="file" name="files" multiple accept=".xlsx,.xls,.csv" class="file-input" required>
+        <button class="btn btn-primary btn-sm" type="submit">อัปโหลดและนำเข้า</button>
+        <p class="hint">นำเข้าทันทีเมื่ออัปโหลด ไฟล์ซ้ำ (เนื้อหาเดิม) จะถูกข้าม</p>
+    </form>
+    <form class="card dropzone" method="post" enctype="multipart/form-data"
+          action="{% url 'ingest:upload' shop.pk 'ADS' %}">
+        {% csrf_token %}
+        <h2>📢 ไฟล์โฆษณา</h2>
+        <input type="file" name="files" multiple accept=".xlsx,.xls,.csv" class="file-input" required>
+        <button class="btn btn-primary btn-sm" type="submit">อัปโหลดและนำเข้า</button>
+        <p class="hint">ระบบดึง SKU จากชื่อแคมเปญ [SKU] อัตโนมัติ</p>
+    </form>
+</div>
+
+<div class="card table-card">
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ไฟล์</th><th>ชนิด</th><th class="num">แถว</th>
+                <th>ช่วงวันที่</th><th>สถานะ</th><th>อัปโหลดเมื่อ</th><th></th>
+            </tr>
+        </thead>
+        <tbody id="file-rows">
+            {% include "ingest/_file_rows.html" %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">🏪</div>
+    <p>สร้างร้านค้าก่อน แล้วจึงอัปโหลดไฟล์ยอดขาย/โฆษณาของร้านนั้น</p>
+</div>
+{% endif %}
+{% endblock %}

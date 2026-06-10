@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}ประวัติการนำเข้า — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🕘 ประวัติการนำเข้า</h1>
+    <a class="btn-link" href="{% url 'ingest:file_manager' %}">← กลับไปจัดการไฟล์</a>
+</div>
+
+<div class="card table-card">
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr><th>เวลา</th><th>ผู้ใช้</th><th>ร้านค้า</th><th>ไฟล์</th><th>ชนิด</th><th class="num">แถว</th><th>สถานะ</th></tr>
+        </thead>
+        <tbody>
+            {% for f in files %}
+            <tr>
+                <td>{{ f.uploaded_at|date:"d/m/Y H:i" }}</td>
+                <td>{{ f.uploaded_by.get_username|default:"ระบบ" }}</td>
+                <td>{{ f.shop.name }}</td>
+                <td>{{ f.original_name|truncatechars:45 }}</td>
+                <td>{{ f.get_kind_display }}</td>
+                <td class="num">{{ f.row_count }}</td>
+                <td>{% if f.status == "PROCESSED" %}✅{% elif f.status == "ERROR" %}❌{% else %}⏳{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="empty-cell">ยังไม่มีประวัติ</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}

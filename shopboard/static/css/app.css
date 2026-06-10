@@ -420,3 +420,17 @@ a { color: var(--accent); text-decoration: none; }
 .assign-list { list-style: none; margin: 10px 0 0; padding: 0; max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .assign-list .check-label { margin: 0; padding: 6px; border-radius: 6px; }
 .assign-list .check-label:hover { background: var(--surface-2); }
+
+/* ---------- file manager ---------- */
+.upload-zones { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+@media (max-width: 800px) { .upload-zones { grid-template-columns: 1fr; } }
+.dropzone { display: flex; flex-direction: column; gap: 10px; border-style: dashed; }
+.dropzone h2 { margin: 0; font-size: 16px; }
+.shop-chip { padding: 6px 14px; border-radius: 99px; border: 1px solid var(--border); color: var(--text); font-size: 13px; }
+.shop-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.status-chip { font-size: 12px; padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
+.status-chip.ok { background: rgba(124,252,0,0.1); color: var(--c-profit); }
+.status-chip.err { background: rgba(255,77,77,0.12); color: var(--c-neg); }
+.status-chip.pending { background: rgba(255,215,0,0.1); color: var(--c-com); }
+.btn-chip { border: none; cursor: pointer; font-family: var(--font-body); }
+.error-detail { background: var(--bg); border-radius: 8px; padding: 10px; font-size: 12px; white-space: pre-wrap; color: var(--c-neg); }
