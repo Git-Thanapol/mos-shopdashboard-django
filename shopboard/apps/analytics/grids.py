@@ -1,8 +1,9 @@
 """AG Grid config builders — one per report table.
 
 Day/body cells stay numeric (the JS formatter renders them); the 6-row monthly
-footer and other pinned rows ship preformatted strings, matching the legacy
-fmt_n/fmt_p output ("12,345 (10.5%)", zero → "-").
+footer and other pinned rows ship preformatted strings via fmt_n/fmt_p
+("12,345.00 (10.50%)", zero → "-"). All computed values use 2 decimals;
+only counts (orders/quantity) stay whole numbers.
 """
 from datetime import timedelta
 
@@ -10,11 +11,11 @@ THAI_WD = ["จ.", "อ.", "พ.", "พฤ.", "ศ.", "ส.", "อา."]
 
 
 def fmt_n(v):
-    return f"{v:,.0f}" if v else "-"
+    return f"{v:,.2f}" if v else "-"
 
 
 def fmt_p(v):
-    return f"{v:,.1f}%" if v else "-"
+    return f"{v:,.2f}%" if v else "-"
 
 
 def val_pct(v, base):
@@ -32,6 +33,9 @@ def monthly_grid(f, day_rows, cell, skus, names, footer, kpi) -> dict:
         {"field": "ppct", "header": "%กำไร", "type": "pct", "hdr": "green", "pinned": True, "width": 75, "posGreen": True},
         {"field": "ads", "header": "ค่าแอด", "type": "money", "hdr": "orange", "pinned": True, "width": 95, "color": "ads"},
         {"field": "apct", "header": "%แอด", "type": "pct", "hdr": "orange", "pinned": True, "width": 70, "color": "ads"},
+        {"field": "opct", "header": "%ค่าดำเนินการ", "type": "pct", "hdr": "purple", "pinned": True, "width": 95},
+        {"field": "cpct", "header": "%ค่าคอม", "type": "pct", "hdr": "teal", "pinned": True, "width": 80},
+        {"field": "tpct", "header": "%ทุน", "type": "pct", "hdr": "cost", "pinned": True, "width": 70},
     ]
     keys = {s: f"k{i}" for i, s in enumerate(skus)}
     for s in skus:
@@ -47,6 +51,9 @@ def monthly_grid(f, day_rows, cell, skus, names, footer, kpi) -> dict:
         rev = float(r["revenue"]) if r else 0
         net = float(r["net_profit"]) if r else 0
         ads = float(r["ads_amount"]) if r else 0
+        ops = float(r["box_cost"] + r["delivery_cost"] + r["cod_cost"]) if r else 0
+        com = float(r["com_admin"] + r["com_tele"]) if r else 0
+        cost = float(r["product_cost"]) if r else 0
         row = {
             "date": f"{THAI_WD[d.weekday()]} {d:%d/%m/%y}",
             "sales": rev,
@@ -55,6 +62,9 @@ def monthly_grid(f, day_rows, cell, skus, names, footer, kpi) -> dict:
             "ppct": net / rev * 100 if rev else 0,
             "ads": ads,
             "apct": ads / rev * 100 if rev else 0,
+            "opct": ops / rev * 100 if rev else 0,
+            "cpct": com / rev * 100 if rev else 0,
+            "tpct": cost / rev * 100 if rev else 0,
         }
         for s in skus:
             row[keys[s]] = cell.get((d, s), 0)
@@ -82,6 +92,7 @@ def monthly_grid(f, day_rows, cell, skus, names, footer, kpi) -> dict:
             "sales": kpi["revenue"], "orders": kpi["orders"],
             "profit": kpi["net_profit"], "ppct": kpi["profit_pct"],
             "ads": kpi["ads_amount"], "apct": kpi["ads_pct"],
+            "opct": kpi["ops_pct"], "cpct": kpi["com_pct"], "tpct": kpi["cost_pct"],
             **sku_vals("net_profit"),
         },
         {"rtype": "sales", "date": "รวมยอดขาย", "sales": kpi["revenue"], **sku_vals("revenue", with_pct=False)},
@@ -111,17 +122,26 @@ DAILY_COLUMNS = [
     {"field": "roas", "header": "ROAS", "type": "money2", "hdr": "green", "width": 75},
     {"field": "ppct", "header": "%กำไร", "type": "pct", "hdr": "green", "width": 75, "posGreen": True},
     {"field": "apct", "header": "%แอด", "type": "pct", "hdr": "orange", "width": 70, "color": "ads"},
+    {"field": "opct", "header": "%ค่าดำเนินการ", "type": "pct", "hdr": "purple", "width": 95},
+    {"field": "cpct", "header": "%ค่าคอม", "type": "pct", "hdr": "teal", "width": 80},
+    {"field": "tpct", "header": "%ทุน", "type": "pct", "hdr": "cost", "width": 70},
 ]
 
 
 def daily_grid(rows, kpi) -> dict:
     def map_row(r):
+        rev = r["revenue"]
+        ops = r["box_cost"] + r["delivery_cost"] + r["cod_cost"]
+        com = r["com_admin"] + r["com_tele"]
         return {
             "sku": r["sku_root"], "name": r["name"], "orders": r["orders"], "sales": r["revenue"],
             "cost": r["product_cost"], "box": r["box_cost"], "ship": r["delivery_cost"],
             "cod": r["cod_cost"], "com_a": r["com_admin"], "com_t": r["com_tele"],
             "ads": r["ads_amount"], "profit": r["net_profit"], "roas": r["roas"],
             "ppct": r["profit_pct"], "apct": r["ads_pct"],
+            "opct": ops / rev * 100 if rev else 0,
+            "cpct": com / rev * 100 if rev else 0,
+            "tpct": r["product_cost"] / rev * 100 if rev else 0,
         }
 
     footer = [{
@@ -130,6 +150,7 @@ def daily_grid(rows, kpi) -> dict:
         "box": kpi["box_cost"], "ship": kpi["delivery_cost"], "cod": kpi["cod_cost"],
         "com_a": kpi["com_admin"], "com_t": kpi["com_tele"], "ads": kpi["ads_amount"],
         "profit": kpi["net_profit"], "roas": "", "ppct": kpi["profit_pct"], "apct": kpi["ads_pct"],
+        "opct": kpi["ops_pct"], "cpct": kpi["com_pct"], "tpct": kpi["cost_pct"],
     }]
     return {"columns": DAILY_COLUMNS, "rows": [map_row(r) for r in rows], "footer": footer}
 

@@ -20,7 +20,7 @@
 <div class="kpi-row">
     <div class="kpi-card" style="--kpi: var(--c-sales)">
         <span class="kpi-label">ยอดขาย</span><span class="kpi-value">{{ summary.revenue|money }}</span>
-        <span class="kpi-sub">{{ summary.orders|money }} ออเดอร์ / {{ summary.quantity|money }} ชิ้น</span>
+        <span class="kpi-sub">{{ summary.orders|count }} ออเดอร์ / {{ summary.quantity|count }} ชิ้น</span>
     </div>
     <div class="kpi-card" style="--kpi: var(--c-cost)">
         <span class="kpi-label">ทุนสินค้า</span><span class="kpi-value">{{ summary.product_cost|money }}</span>

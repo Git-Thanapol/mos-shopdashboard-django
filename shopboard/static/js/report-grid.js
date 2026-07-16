@@ -22,15 +22,15 @@
 
     var NUM0 = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
     var NUM2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    var NUM1 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
+    /* every computed number shows 2 decimals; only counts (type "int") stay whole */
     function fmtValue(type, v) {
         if (v === null || v === undefined || v === "") return "-";
         if (typeof v === "string") return v;          // preformatted footer cell
         if (v === 0) return "-";                       // legacy fmt(): zero → "-"
-        if (type === "money") return NUM0.format(v);
+        if (type === "money") return NUM2.format(v);
         if (type === "money2") return NUM2.format(v);
-        if (type === "pct") return NUM1.format(v) + "%";
+        if (type === "pct") return NUM2.format(v) + "%";
         if (type === "int") return NUM0.format(v);
         return String(v);
     }

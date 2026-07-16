@@ -3,22 +3,22 @@
     <div class="kpi-card" style="--kpi: var(--c-sales)">
         <span class="kpi-label">ยอดขายรวม</span>
         <span class="kpi-value">{{ kpi.revenue|money }}</span>
-        <span class="kpi-sub">{{ kpi.orders|money }} ออเดอร์</span>
+        <span class="kpi-sub">{{ kpi.orders|count }} ออเดอร์</span>
     </div>
     <div class="kpi-card" style="--kpi: var(--c-ops)">
         <span class="kpi-label">ค่าดำเนินการ</span>
         <span class="kpi-value">{{ kpi.ops_cost|money }}</span>
-        <span class="kpi-sub">{% widthratio kpi.ops_cost kpi.revenue 100 %}% ของยอดขาย</span>
+        <span class="kpi-sub">{{ kpi.ops_pct|pct }} ของยอดขาย</span>
     </div>
     <div class="kpi-card" style="--kpi: var(--c-com)">
         <span class="kpi-label">ค่าคอมมิชชั่น</span>
         <span class="kpi-value">{{ kpi.com_cost|money }}</span>
-        <span class="kpi-sub">{% widthratio kpi.com_cost kpi.revenue 100 %}% ของยอดขาย</span>
+        <span class="kpi-sub">{{ kpi.com_pct|pct }} ของยอดขาย</span>
     </div>
     <div class="kpi-card" style="--kpi: var(--c-cost)">
         <span class="kpi-label">ทุนสินค้า</span>
         <span class="kpi-value">{{ kpi.product_cost|money }}</span>
-        <span class="kpi-sub">{% widthratio kpi.product_cost kpi.revenue 100 %}% ของยอดขาย</span>
+        <span class="kpi-sub">{{ kpi.cost_pct|pct }} ของยอดขาย</span>
     </div>
     <div class="kpi-card" style="--kpi: var(--c-ads)">
         <span class="kpi-label">ค่าโฆษณา</span>

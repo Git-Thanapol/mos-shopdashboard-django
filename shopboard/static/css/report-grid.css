@@ -21,8 +21,10 @@
     overflow: hidden;
 }
 
-.grid-box { height: 70vh; }
-.grid-box-short { height: 56vh; }
+/* as tall as the viewport allows below the header/filter/KPI stack;
+   the max() floor keeps the grid usable on short screens */
+.grid-box { height: max(70vh, calc(100vh - 400px)); }
+.grid-box-short { height: max(56vh, calc(100vh - 460px)); }
 
 .grid-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; gap: 8px; }
 

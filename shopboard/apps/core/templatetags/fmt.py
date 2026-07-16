@@ -1,4 +1,8 @@
-"""Number formatting: 1,234,567 with '-' for zero/null (matches legacy fmt())."""
+"""Number formatting: 1,234,567.00 with '-' for zero/null.
+
+All computed values render with 2 decimals; only counts (orders/quantity)
+use the integer `count` filter (owner requirement, 2026-07-16).
+"""
 from django import template
 
 register = template.Library()
@@ -6,6 +10,16 @@ register = template.Library()
 
 @register.filter
 def money(value):
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return "-"
+    return f"{v:,.2f}" if v != 0 else "-"
+
+
+@register.filter
+def count(value):
+    """Integer count (orders, quantity) — never shows decimals."""
     try:
         v = float(value)
     except (TypeError, ValueError):
@@ -28,7 +42,7 @@ def pct(value):
         v = float(value)
     except (TypeError, ValueError):
         return "-"
-    return f"{v:,.1f}%" if v != 0 else "-"
+    return f"{v:,.2f}%" if v != 0 else "-"
 
 
 @register.filter
