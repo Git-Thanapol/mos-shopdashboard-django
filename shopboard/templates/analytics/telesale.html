@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeleSale Performance Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f3f6f9;
+            --surface: #ffffff;
+            --primary: #4361ee;
+            --primary-hover: #3a53d0;
+            --secondary: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --border: #e2e8f0;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Google Sans', 'Noto Sans Thai', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .navbar {
+            background-color: var(--surface);
+            padding: 16px 32px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .navbar-brand span { color: var(--text-main); }
+        .navbar-right { display: flex; align-items: center; gap: 16px; }
+        .navbar-meta { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .navbar-links { display: flex; align-items: center; gap: 10px; }
+        .navbar-links a, .navbar-links button {
+            font-size: 13px; color: var(--text-muted); text-decoration: none;
+            background: none; border: none; cursor: pointer; font-family: inherit;
+            padding: 6px 10px; border-radius: 8px;
+        }
+        .navbar-links a:hover, .navbar-links button:hover { background: var(--secondary); color: var(--text-main); }
+        .channel-pill {
+            font-size: 11px; padding: 3px 10px; border-radius: 99px;
+            border: 1px solid var(--primary); color: var(--primary); font-weight: 600;
+        }
+
+        .container { width: 100%; padding: 24px 32px; }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--surface);
+            padding: 16px 24px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .filter-group { display: flex; align-items: center; gap: 12px; }
+        .filter-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+
+        /* Fast Filters */
+        .fast-filters {
+            display: flex;
+            gap: 8px;
+            background: #f8fafc;
+            padding: 4px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+        }
+        .fast-filters a {
+            background: transparent;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .fast-filters a:hover { background: var(--secondary); }
+        .fast-filters a.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Date Picker */
+        .date-picker-wrapper { display: flex; align-items: center; gap: 8px; }
+        input[type="date"], input[type="text"], select {
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="date"]:focus, input[type="text"]:focus, select:focus { border-color: var(--primary); }
+
+        /* Summary Horizontal Row */
+        .summary-row {
+            display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; width: 100%;
+        }
+        .summary-card {
+            background: var(--surface);
+            padding: 12px 10px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+            flex: 1 1 170px; min-width: 0;
+        }
+        .card-icon {
+            flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+        }
+        .bg-blue { background: #eef2ff; } .bg-yellow { background: #fef3c7; }
+        .bg-gray { background: #f1f5f9; } .bg-sky { background: #e0f2fe; }
+        .bg-rose { background: #ffe4e6; } .bg-purple { background: #f3e8ff; }
+        .bg-green { background: #dcfce7; } .bg-orange { background: #ffedd5; }
+        .bg-indigo { background: #e0e7ff; } .bg-emerald { background: #ecfdf5; }
+        .bg-pink { background: #fce7f3; }
+
+        .card-info { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .summary-title { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 2px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .summary-value { font-size: clamp(13px, 1.2vw, 16px); font-weight: 700; color: var(--text-main); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+
+        /* Table Section */
+        .table-section {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .table-header {
+            padding: 20px 24px 16px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .table-title h2 { font-size: 16px; font-weight: 700; margin: 0 0 4px 0; color: var(--primary); text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
+        .table-title h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-main); }
+        .table-title p { font-size: 12px; color: var(--text-muted); margin: 0; }
+
+        .btn-outline {
+            padding: 8px 16px; border: 1px solid var(--border); border-radius: 8px;
+            background: white; color: var(--text-main); font-weight: 600; font-size: 13px;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+        .btn-outline:hover { background: #f8fafc; }
+
+        /* Table Toolbar */
+        .table-toolbar {
+            padding: 12px 24px; display: flex; justify-content: space-between;
+            border-bottom: 1px solid var(--border); border-top: 1px solid var(--border);
+            background: #fbfcfd; gap: 12px; flex-wrap: wrap; align-items: center;
+        }
+        .search-box { flex: 1; min-width: 250px; position: relative; }
+        .search-box input { width: 100%; padding-left: 32px; }
+        .search-box::before { content: '⌕'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; }
+
+        .toolbar-filters { display: flex; gap: 12px; flex-wrap: wrap; }
+
+        .type-filters {
+            display: flex; background: #fff; border: 1px solid var(--border);
+            border-radius: 8px; overflow: hidden; padding: 2px; gap: 2px;
+        }
+        .type-filters button {
+            padding: 6px 14px; border: none; background: transparent; border-radius: 6px;
+            cursor: pointer; font-weight: 600; font-size: 11px; color: var(--text-muted); transition: all 0.2s;
+        }
+        .type-filters button:hover { background: #f1f5f9; }
+        .type-filters button.active { background: #eef2ff; color: var(--primary); }
+        .type-filters button[data-type="Telesale"].active { background: #f3e8ff; color: #7e22ce; }
+
+        /* Table */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 14px 16px; font-size: 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { background-color: #ffffff; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+        td.number { text-align: right; font-weight: 500; }
+        th.number { text-align: right; }
+        tbody tr:hover { background-color: #f8fafc; }
+
+        /* Employee Cell */
+        .emp-cell { display: flex; align-items: center; gap: 12px; }
+        .emp-avatar {
+            width: 36px; height: 36px; border-radius: 10px; background: #e0f2ec;
+            color: #0f766e; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 12px; flex-shrink: 0;
+        }
+        .emp-info { display: flex; flex-direction: column; }
+        .emp-name { font-weight: 600; color: var(--text-main); font-size: 13px; }
+        .emp-team { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; text-align: center; min-width: 35px; }
+
+        .text-success { color: var(--success); font-weight: 700; }
+        .text-danger { color: var(--danger); font-weight: 700; }
+        .row-total { background-color: #f8fafc; font-weight: 700; }
+        .row-total td { border-top: 2px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Shop Dashboard <span>| TeleSale</span>
+        </div>
+        <div class="navbar-right">
+            <div class="navbar-links">
+                <a href="{% url 'analytics:home' %}">🏠 หน้าหลัก</a>
+                {% if user.is_superuser %}<a href="{% url 'analytics:employee_list' %}">👥 จัดการพนักงาน</a>{% endif %}
+                <a href="{% url 'analytics:channel_select' %}" class="channel-pill">{% if is_test_channel %}🧪{% else %}🏪{% endif %} {{ channel_label }} ⇄</a>
+                <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">🚪 ออกจากระบบ</button>
+                </form>
+            </div>
+            <div class="navbar-meta">
+                อัพเดทข้อมูลล่าสุด: <span id="lastUpdate"></span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <!-- Filter Bar -->
+        <form class="filter-section" method="get">
+            <div class="filter-group">
+                <span class="filter-label">ระยะเวลา:</span>
+                <div class="fast-filters">
+                    <a data-preset="today" class="{% if preset == 'today' %}active{% endif %}" href="?preset=today">วันนี้</a>
+                    <a data-preset="yesterday" class="{% if preset == 'yesterday' %}active{% endif %}" href="?preset=yesterday">เมื่อวาน</a>
+                    <a data-preset="7d" class="{% if preset == '7d' %}active{% endif %}" href="?preset=7d">7 วัน</a>
+                    <a data-preset="30d" class="{% if preset == '30d' %}active{% endif %}" href="?preset=30d">30 วัน</a>
+                    <a data-preset="month" class="{% if preset == 'month' %}active{% endif %}" href="?preset=month">เดือนนี้</a>
+                </div>
+            </div>
+            <div class="filter-group">
+                <span class="filter-label">เลือกวันที่:</span>
+                <div class="date-picker-wrapper">
+                    <input type="date" id="startDate" name="from" value="{{ date_from|date:'Y-m-d' }}" onchange="this.form.submit()">
+                    <span style="color: var(--text-muted);">ถึง</span>
+                    <input type="date" id="endDate" name="to" value="{{ date_to|date:'Y-m-d' }}" onchange="this.form.submit()">
+                </div>
+            </div>
+        </form>
+
+        <!-- Summary Cards -->
+        <div class="summary-row">
+            <div class="summary-card"><div class="card-icon bg-blue">💰</div><div class="card-info"><div class="summary-title">ยอดขายรวม</div><div class="summary-value" id="sumSales">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-yellow">🛍️</div><div class="card-info"><div class="summary-title">ต้นทุนสินค้า</div><div class="summary-value" id="sumProductCost">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-gray">📦</div><div class="card-info"><div class="summary-title">ค่ากล่อง</div><div class="summary-value" id="sumBox">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-sky">🚚</div><div class="card-info"><div class="summary-title">ค่าส่ง</div><div class="summary-value" id="sumShipping">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-rose">💳</div><div class="card-info"><div class="summary-title">COD</div><div class="summary-value" id="sumCod">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-green">🤝</div><div class="card-info"><div class="summary-title">ค่าคอมมิชชัน</div><div class="summary-value" id="sumComm">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-indigo">🧑‍💼</div><div class="card-info"><div class="summary-title">เงินเดือน</div><div class="summary-value" id="sumSalary">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-orange">📢</div><div class="card-info"><div class="summary-title">ค่าโฆษณา (รวมบริษัท)</div><div class="summary-value" id="sumAds">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-emerald">💎</div><div class="card-info"><div class="summary-title">กำไรสุทธิ</div><div class="summary-value" id="sumProfit">฿0</div></div></div>
+            <div class="summary-card"><div class="card-icon bg-pink">🎯</div><div class="card-info"><div class="summary-title">% กำไร</div><div class="summary-value" id="sumMargin" style="color: var(--success);">0%</div></div></div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-title">
+                    <h2>TEAM PERFORMANCE</h2>
+                    <h1>ผลงานพนักงาน TeleSale</h1>
+                    <p>ค้นหา เปรียบเทียบ และกรองข้อมูลได้ทันที</p>
+                </div>
+                <button class="btn-outline" id="exportCsv">⇩ ส่งออก CSV</button>
+            </div>
+
+            <div class="table-toolbar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="ค้นหาชื่อพนักงาน หรือทีม...">
+                </div>
+                <div class="toolbar-filters">
+                    <select id="empFilter">
+                        <option value="all">พนักงานทุกคน</option>
+                    </select>
+                    <div class="type-filters" id="typeFilters">
+                        <button class="active" data-type="all">ทั้งหมด</button>
+                        <button data-type="Admin">ADMIN</button>
+                        <button data-type="Telesale">TELESALE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>พนักงาน</th>
+                            <th class="number">ออเดอร์</th>
+                            <th class="number">ยอดขายรวม</th>
+                            <th class="number">ต้นทุน</th>
+                            <th class="number">ค่ากล่อง</th>
+                            <th class="number">ค่าส่ง</th>
+                            <th class="number">COD</th>
+                            <th class="number">ค่าคอมมิชชัน</th>
+                            <th class="number">เงินเดือน</th>
+                            <th class="number">กำไรสุทธิ ▼</th>
+                            <th class="number">% กำไร</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {{ payload_json|json_script:"tele-payload" }}
+    <script>
+        var PAYLOAD = JSON.parse(document.getElementById('tele-payload').textContent);
+
+        var fmt = function (val) { return new Intl.NumberFormat('th-TH').format(Math.round(val)); };
+
+        var searchInput = document.getElementById('searchInput');
+        var empFilter = document.getElementById('empFilter');
+        var tableBody = document.getElementById('tableBody');
+
+        document.getElementById('lastUpdate').textContent =
+            new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date());
+
+        // populate employee/team dropdown
+        var optGroupTeam = document.createElement('optgroup');
+        optGroupTeam.label = "กรองตามทีม";
+        PAYLOAD.teams.forEach(function (t) { optGroupTeam.appendChild(new Option("ทีม " + t, "team:" + t)); });
+        empFilter.appendChild(optGroupTeam);
+
+        var optGroupEmp = document.createElement('optgroup');
+        optGroupEmp.label = "รายบุคคล";
+        PAYLOAD.employees.forEach(function (n) { optGroupEmp.appendChild(new Option(n, "emp:" + n)); });
+        empFilter.appendChild(optGroupEmp);
+
+        function initials(name) {
+            var parts = name.trim().split(/\s+/);
+            return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+        }
+
+        var currentRows = [];
+
+        function calculateAndRender() {
+            var role = document.querySelector('#typeFilters .active').dataset.type;
+            var searchTerm = searchInput.value.toLowerCase();
+            var selectedEmpFilter = empFilter.value;
+
+            var allRows = (PAYLOAD.roles[role] || PAYLOAD.roles.all).rows;
+
+            var filtered = allRows.filter(function (r) {
+                var matchSelect = true;
+                if (selectedEmpFilter.indexOf('team:') === 0) matchSelect = r.team === selectedEmpFilter.slice(5);
+                else if (selectedEmpFilter.indexOf('emp:') === 0) matchSelect = r.name === selectedEmpFilter.slice(4);
+                if (!matchSelect) return false;
+                return r.name.toLowerCase().includes(searchTerm) || (r.team || '').toLowerCase().includes(searchTerm);
+            });
+
+            var totals = { orders: 0, revenue: 0, product_cost: 0, box_cost: 0, delivery_cost: 0, cod_cost: 0, commission: 0, salary: 0, profit: 0 };
+            filtered.forEach(function (r) {
+                totals.orders += r.orders; totals.revenue += r.revenue; totals.product_cost += r.product_cost;
+                totals.box_cost += r.box_cost; totals.delivery_cost += r.delivery_cost; totals.cod_cost += r.cod_cost;
+                totals.commission += r.commission; totals.salary += r.salary; totals.profit += r.profit;
+            });
+            var margin = totals.revenue > 0 ? (totals.profit / totals.revenue) * 100 : 0;
+            var netProfit = totals.profit - PAYLOAD.adsTotal;
+            var netMargin = totals.revenue > 0 ? (netProfit / totals.revenue) * 100 : 0;
+
+            document.getElementById('sumSales').textContent = '฿' + fmt(totals.revenue);
+            document.getElementById('sumProductCost').textContent = '฿' + fmt(totals.product_cost);
+            document.getElementById('sumBox').textContent = '฿' + fmt(totals.box_cost);
+            document.getElementById('sumShipping').textContent = '฿' + fmt(totals.delivery_cost);
+            document.getElementById('sumCod').textContent = '฿' + fmt(totals.cod_cost);
+            document.getElementById('sumComm').textContent = '฿' + fmt(totals.commission);
+            document.getElementById('sumSalary').textContent = '฿' + fmt(totals.salary);
+            document.getElementById('sumAds').textContent = '฿' + fmt(PAYLOAD.adsTotal);
+            document.getElementById('sumProfit').textContent = '฿' + fmt(netProfit);
+
+            var marginEl = document.getElementById('sumMargin');
+            marginEl.textContent = netMargin.toFixed(1) + '%';
+            marginEl.style.color = netMargin > 0 ? 'var(--success)' : 'var(--danger)';
+            document.getElementById('sumProfit').style.color = netProfit > 0 ? 'var(--text-main)' : 'var(--danger)';
+
+            filtered.sort(function (a, b) { return b.profit - a.profit; });
+            currentRows = filtered;
+
+            var rowsHtml = '';
+            if (filtered.length === 0) {
+                rowsHtml = '<tr><td colspan="11" style="text-align:center; padding:32px; color:var(--text-muted);">ไม่พบข้อมูล</td></tr>';
+            } else {
+                filtered.forEach(function (r) {
+                    var empMargin = r.revenue > 0 ? (r.profit / r.revenue) * 100 : 0;
+                    var profitClass = r.profit > 0 ? 'text-success' : 'text-danger';
+                    rowsHtml += '' +
+                        '<tr>' +
+                            '<td><div class="emp-cell"><div class="emp-avatar">' + initials(r.name) + '</div>' +
+                                '<div class="emp-info"><span class="emp-name">' + r.name + '</span>' +
+                                (r.team ? '<span class="emp-team">' + r.team + '</span>' : '') + '</div></div></td>' +
+                            '<td class="number"><strong>' + fmt(r.orders) + '</strong></td>' +
+                            '<td class="number" style="font-weight:600;">฿' + fmt(r.revenue) + '</td>' +
+                            '<td class="number">฿' + fmt(r.product_cost) + '</td>' +
+                            '<td class="number">฿' + fmt(r.box_cost) + '</td>' +
+                            '<td class="number">฿' + fmt(r.delivery_cost) + '</td>' +
+                            '<td class="number">฿' + fmt(r.cod_cost) + '</td>' +
+                            '<td class="number">฿' + fmt(r.commission) + '</td>' +
+                            '<td class="number">฿' + fmt(r.salary) + '</td>' +
+                            '<td class="number ' + profitClass + '">฿' + fmt(r.profit) + '</td>' +
+                            '<td class="number" style="font-weight:600;">' + empMargin.toFixed(1) + '%</td>' +
+                        '</tr>';
+                });
+                rowsHtml += '' +
+                    '<tr class="row-total">' +
+                        '<td style="padding-left: 16px;">รวมทั้งหมด</td>' +
+                        '<td class="number">' + fmt(totals.orders) + '</td>' +
+                        '<td class="number">฿' + fmt(totals.revenue) + '</td>' +
+                        '<td class="number">฿' + fmt(totals.product_cost) + '</td>' +
+                        '<td class="number">฿' + fmt(totals.box_cost) + '</td>' +
+                        '<td class="number">฿' + fmt(totals.delivery_cost) + '</td>' +
+                        '<td class="number">฿' + fmt(totals.cod_cost) + '</td>' +
+                        '<td class="number">฿' + fmt(totals.commission) + '</td>' +
+                        '<td class="number">฿' + fmt(totals.salary) + '</td>' +
+                        '<td class="number ' + (totals.profit > 0 ? 'text-success' : 'text-danger') + '">฿' + fmt(totals.profit) + '</td>' +
+                        '<td class="number">' + margin.toFixed(1) + '%</td>' +
+                    '</tr>';
+            }
+            tableBody.innerHTML = rowsHtml;
+        }
+
+        searchInput.addEventListener('input', calculateAndRender);
+        empFilter.addEventListener('change', calculateAndRender);
+
+        document.getElementById('typeFilters').addEventListener('click', function (e) {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelectorAll('#typeFilters button').forEach(function (b) { b.classList.remove('active'); });
+                e.target.classList.add('active');
+                calculateAndRender();
+            }
+        });
+
+        document.getElementById('exportCsv').addEventListener('click', function () {
+            var header = ['พนักงาน', 'ทีม', 'ออเดอร์', 'ยอดขายรวม', 'ต้นทุน', 'ค่ากล่อง', 'ค่าส่ง', 'COD', 'ค่าคอมมิชชัน', 'เงินเดือน', 'กำไรสุทธิ', '% กำไร'];
+            var lines = [header.join(',')];
+            currentRows.forEach(function (r) {
+                var empMargin = r.revenue > 0 ? (r.profit / r.revenue) * 100 : 0;
+                lines.push([r.name, r.team, r.orders, r.revenue, r.product_cost, r.box_cost, r.delivery_cost,
+                    r.cod_cost, r.commission, r.salary, r.profit, empMargin.toFixed(1)].join(','));
+            });
+            var blob = new Blob(["﻿" + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'telesale-{{ date_from|date:"Y-m-d" }}_{{ date_to|date:"Y-m-d" }}.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        calculateAndRender();
+    </script>
+</body>
+</html>

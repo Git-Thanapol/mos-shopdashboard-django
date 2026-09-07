@@ -1,18 +1,22 @@
 from datetime import date, timedelta
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
-from django.shortcuts import redirect, render
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.catalog.models import FixCost, MasterItem, ProductTag
 from apps.core import channels
-from apps.core.decorators import channel_required
+from apps.core.decorators import channel_required, superuser_required
 from apps.core.thai import THAI_MONTHS, thai_date
+from apps.ingest.models import SalesLine
 
-from . import grids, queries
+from . import grids, queries, telesale
 from .filters import FilterState
+from .forms import EmployeeAliasForm, EmployeeForm
+from .models import Employee, EmployeeAlias
 
 
 @login_required
@@ -321,6 +325,130 @@ def commission(request):
                com_pct=(total_admin + total_tele) / total_rev * 100 if total_rev else 0,
                grid_json=grids.commission_grid(out, total_admin, total_tele, total_rev))
     return render(request, "analytics/commission.html", ctx)
+
+
+@channel_required
+def telesale_dashboard(request):
+    channel = channels.current(request)
+    today = timezone.localdate()
+
+    from_param, to_param = request.GET.get("from"), request.GET.get("to")
+    preset = request.GET.get("preset", "" if (from_param or to_param) else "30d")
+
+    if from_param and to_param:
+        try:
+            date_from, date_to = date.fromisoformat(from_param), date.fromisoformat(to_param)
+        except ValueError:
+            date_from, date_to, preset = today - timedelta(days=29), today, "30d"
+    elif preset == "today":
+        date_from = date_to = today
+    elif preset == "yesterday":
+        date_from = date_to = today - timedelta(days=1)
+    elif preset == "7d":
+        date_from, date_to = today - timedelta(days=6), today
+    elif preset == "month":
+        date_from, date_to = today.replace(day=1), today
+    else:
+        preset = "30d"
+        date_from, date_to = today - timedelta(days=29), today
+
+    by_role = telesale.employee_performance_all_roles(channel, date_from, date_to)
+    ads_total = queries.ads_total(channel, date_from, date_to)
+
+    payload = {
+        "roles": {role: {"rows": rows, "totals": totals} for role, (rows, totals) in by_role.items()},
+        "adsTotal": ads_total,
+        "teams": sorted({e.team for e in Employee.objects.filter(is_active=True) if e.team}),
+        "employees": sorted({r["name"] for r in by_role["all"][0]}),
+    }
+
+    ctx = {
+        "date_from": date_from, "date_to": date_to, "preset": preset,
+        "payload_json": payload,
+    }
+    return render(request, "analytics/telesale.html", ctx)
+
+
+# --------------------------------------------------------- employee CRUD (superuser only)
+def _employee_context():
+    employees = Employee.objects.all().order_by("name")
+    aliases = EmployeeAlias.objects.select_related("employee").order_by("raw_creator")
+    mapped = set(aliases.values_list("raw_creator", flat=True))
+    all_creators = (
+        SalesLine.objects.exclude(creator="").values_list("creator", flat=True).distinct().order_by("creator")
+    )
+    return {
+        "employees": employees,
+        "aliases": aliases,
+        "unmapped_creators": [c for c in all_creators if c not in mapped],
+    }
+
+
+@superuser_required
+def employee_list(request):
+    ctx = _employee_context()
+    ctx["create_form"] = EmployeeForm()
+    ctx["alias_form"] = EmployeeAliasForm()
+    return render(request, "analytics/employees.html", ctx)
+
+
+@superuser_required
+@require_POST
+def employee_create(request):
+    form = EmployeeForm(request.POST)
+    if form.is_valid():
+        form.save()
+        messages.success(request, "เพิ่มพนักงานแล้ว")
+    else:
+        messages.error(request, "ข้อมูลไม่ถูกต้อง: " + "; ".join(f"{k}: {v[0]}" for k, v in form.errors.items()))
+    return redirect("analytics:employee_list")
+
+
+@superuser_required
+def employee_edit(request, pk):
+    emp = get_object_or_404(Employee, pk=pk)
+    if request.method == "POST":
+        form = EmployeeForm(request.POST, instance=emp)
+        if form.is_valid():
+            obj = form.save()
+            return render(request, "analytics/_employee_row.html", {"emp": obj})
+        return render(request, "analytics/_employee_row_edit.html", {"emp": emp, "form": form})
+    return render(request, "analytics/_employee_row_edit.html", {"emp": emp, "form": EmployeeForm(instance=emp)})
+
+
+@superuser_required
+def employee_row(request, pk):
+    emp = get_object_or_404(Employee, pk=pk)
+    return render(request, "analytics/_employee_row.html", {"emp": emp})
+
+
+@superuser_required
+@require_POST
+def employee_delete(request, pk):
+    get_object_or_404(Employee, pk=pk).delete()
+    return HttpResponse("")  # htmx removes the row
+
+
+@superuser_required
+@require_POST
+def alias_create(request):
+    form = EmployeeAliasForm(request.POST)
+    if form.is_valid():
+        try:
+            form.save()
+            messages.success(request, "ผูกชื่อแล้ว")
+        except Exception:
+            messages.error(request, "ชื่อนี้ถูกผูกไว้กับพนักงานคนอื่นแล้ว")
+    else:
+        messages.error(request, "ข้อมูลไม่ถูกต้อง: " + "; ".join(f"{k}: {v[0]}" for k, v in form.errors.items()))
+    return redirect("analytics:employee_list")
+
+
+@superuser_required
+@require_POST
+def alias_delete(request, pk):
+    get_object_or_404(EmployeeAlias, pk=pk).delete()
+    return HttpResponse("")  # htmx removes the row
 
 
 @channel_required

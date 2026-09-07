@@ -260,6 +260,74 @@ def ads_campaigns(channel, f, ids) -> list[dict]:
     )
 
 
+def ads_total(channel, date_from, date_to) -> float:
+    """Company-wide ad spend for the period — not attributable per employee."""
+    rows = _rows(
+        "SELECT COALESCE(SUM(cost), 0) AS v FROM ingest_adspend WHERE channel = %s AND date BETWEEN %s AND %s",
+        [channel, date_from, date_to],
+    )
+    return float(rows[0]["v"]) if rows else 0.0
+
+
+def employee_order_lines(channel, date_from, date_to) -> list[dict]:
+    """Order-grain rows carrying creator/role for telesale attribution — same
+    per-line cost formulas and two-stage (MAX-per-order) aggregation as
+    analytics_fact_lines/analytics_fact_daily (plan §5.6/§5.9), but grouped by
+    order only (no sku_root grain) since employee performance isn't per-SKU."""
+    return _rows(
+        """
+        WITH lines AS (
+            SELECT
+                s.id, s.order_id, s.date, s.creator, s.role,
+                s.quantity, s.amount_paid, s.is_cod, s.courier_norm,
+                COALESCE(m.cost, mr.cost, 0) AS unit_cost,
+                COALESCE(m.box_cost, mr.box_cost, 0) AS box_cost_line,
+                COALESCE(m.delivery_cost, mr.delivery_cost, 0) AS delivery_cost_line,
+                COALESCE(m.com_admin_pct, mr.com_admin_pct, 0) AS com_admin_pct,
+                COALESCE(m.com_tele_pct, mr.com_tele_pct, 0) AS com_tele_pct,
+                CASE s.courier_norm
+                    WHEN 'J&T Express' THEN COALESCE(m.p_jnt, 0)
+                    WHEN 'Flash Express' THEN COALESCE(m.p_flash, 0)
+                    WHEN 'Kerry Express' THEN COALESCE(m.p_kerry, 0)
+                    WHEN 'ThailandPost' THEN COALESCE(m.p_thai_post, 0)
+                    WHEN 'DHL_1' THEN COALESCE(m.p_dhl, 0)
+                    WHEN 'SPX Express' THEN COALESCE(m.p_spx, 0)
+                    WHEN 'LEX TH' THEN COALESCE(m.p_lex, 0)
+                    ELSE COALESCE(m.p_std, 0)
+                END AS ship_percent
+            FROM ingest_salesline s
+            LEFT JOIN catalog_masteritem m ON m.channel = s.channel AND m.sku = s.sku_norm
+            LEFT JOIN catalog_masteritem mr ON mr.channel = s.channel AND mr.sku = s.sku_root
+            WHERE s.channel = %s AND s.status <> 'ยกเลิก' AND s.date BETWEEN %s AND %s
+        ),
+        priced AS (
+            SELECT *,
+                quantity * unit_cost AS product_cost,
+                CASE WHEN is_cod AND ship_percent > 0
+                     THEN amount_paid * (ship_percent / 100) * 1.07 ELSE 0 END AS cod_cost,
+                CASE WHEN role = 'Admin' THEN amount_paid * (com_admin_pct / 100) ELSE 0 END AS com_admin,
+                CASE WHEN role = 'Telesale' THEN amount_paid * (com_tele_pct / 100) ELSE 0 END AS com_tele
+            FROM lines
+        )
+        SELECT
+            order_id,
+            (array_agg(date ORDER BY id))[1] AS date,
+            (array_agg(creator ORDER BY id))[1] AS creator,
+            (array_agg(role ORDER BY id))[1] AS role,
+            SUM(amount_paid) AS revenue,
+            SUM(product_cost) AS product_cost,
+            MAX(box_cost_line) AS box_cost,
+            MAX(delivery_cost_line) AS delivery_cost,
+            SUM(cod_cost) AS cod_cost,
+            SUM(com_admin) AS com_admin,
+            SUM(com_tele) AS com_tele
+        FROM priced
+        GROUP BY order_id
+        """,
+        [channel, date_from, date_to],
+    )
+
+
 def years_available(channel) -> list[int]:
     rows = _rows(
         "SELECT DISTINCT EXTRACT(YEAR FROM date)::int AS y FROM analytics_fact_daily WHERE channel = %s ORDER BY 1 DESC",

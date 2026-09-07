@@ -28,6 +28,7 @@
 
         <div class="nav-links" x-data="{open: null}" @click.outside="open = null">
             <a class="nav-item" href="{% url 'analytics:home' %}">🏠 ภาพรวม</a>
+            <a class="nav-item" href="{% url 'analytics:telesale' %}">📞 TeleSale</a>
 
             <div class="nav-group">
                 <button class="nav-item" @click="open = open === 'reports' ? null : 'reports'">📊 รายงาน ▾</button>
@@ -54,6 +55,7 @@
                     <a href="{% url 'ingest:file_manager' %}">จัดการไฟล์ / นำเข้าข้อมูล</a>
                     <a href="{% url 'catalog:master_items' %}">ตั้งค่าสินค้า (Master)</a>
                     <a href="{% url 'catalog:tags' %}">จัดการแท็กสินค้า</a>
+                    {% if user.is_superuser %}<a href="{% url 'analytics:employee_list' %}">จัดการพนักงาน TeleSale</a>{% endif %}
                     {% if user.is_staff %}<a href="{% url 'admin:index' %}">ผู้ใช้งาน (Admin)</a>{% endif %}
                 </div>
             </div>

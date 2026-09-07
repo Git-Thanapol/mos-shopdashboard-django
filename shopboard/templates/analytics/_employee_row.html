@@ -1,0 +1,15 @@
+<tr id="employee-row-{{ emp.pk }}">
+    <td>{{ emp.name }}</td>
+    <td>{{ emp.team }}</td>
+    <td class="num">{{ emp.salary_per_day|floatformat:2 }}</td>
+    <td>{% if emp.is_active %}✅ ทำงานอยู่{% else %}⏸️ ไม่ทำงาน{% endif %}</td>
+    <td class="row-actions">
+        <button class="btn-icon" title="แก้ไข"
+                hx-get="{% url 'analytics:employee_edit' emp.pk %}"
+                hx-target="#employee-row-{{ emp.pk }}" hx-swap="outerHTML">✏️</button>
+        <button class="btn-icon" title="ลบ"
+                hx-post="{% url 'analytics:employee_delete' emp.pk %}"
+                hx-confirm="ลบพนักงาน {{ emp.name }} ? (การผูกชื่อผู้สร้างออเดอร์ของคนนี้จะถูกลบด้วย)"
+                hx-target="#employee-row-{{ emp.pk }}" hx-swap="outerHTML">🗑️</button>
+    </td>
+</tr>

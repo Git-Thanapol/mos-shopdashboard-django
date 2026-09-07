@@ -1,0 +1,21 @@
+<tr id="employee-row-{{ emp.pk }}" class="row-editing">
+    <td colspan="5">
+        <form hx-post="{% url 'analytics:employee_edit' emp.pk %}"
+              hx-target="#employee-row-{{ emp.pk }}" hx-swap="outerHTML"
+              class="master-form-grid">
+            {% for field in form %}
+            <label class="form-cell">
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% if field.errors %}<em class="field-error">{{ field.errors.0 }}</em>{% endif %}
+            </label>
+            {% endfor %}
+            <div class="form-cell form-actions">
+                <button class="btn btn-primary btn-sm" type="submit">บันทึก</button>
+                <button class="btn btn-secondary btn-sm" type="button"
+                        hx-get="{% url 'analytics:employee_row' emp.pk %}"
+                        hx-target="#employee-row-{{ emp.pk }}" hx-swap="outerHTML">ยกเลิก</button>
+            </div>
+        </form>
+    </td>
+</tr>

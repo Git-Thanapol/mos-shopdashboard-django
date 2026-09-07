@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}จัดการพนักงาน TeleSale — Shop Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👥 จัดการพนักงาน TeleSale <span class="count-badge">{{ employees|length }} คน</span></h1>
+</div>
+
+<details class="card add-panel">
+    <summary>➕ เพิ่มพนักงานใหม่</summary>
+    <form method="post" action="{% url 'analytics:employee_create' %}" class="master-form-grid">
+        {% csrf_token %}
+        {% for field in create_form %}
+        <label class="form-cell">
+            <span>{{ field.label }}</span>
+            {{ field }}
+            {% if field.errors %}<em class="field-error">{{ field.errors.0 }}</em>{% endif %}
+        </label>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">บันทึก</button>
+    </form>
+</details>
+
+<div class="card table-card" id="employee-table">
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ชื่อพนักงาน</th>
+                <th>ทีม</th>
+                <th class="num">เงินเดือน/วัน</th>
+                <th>สถานะ</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in employees %}
+                {% include "analytics/_employee_row.html" %}
+            {% empty %}
+                <tr><td colspan="5" class="empty-cell">ยังไม่มีพนักงาน</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<div class="page-header" style="margin-top: 28px;">
+    <h1>🔗 ผูกชื่อผู้สร้างออเดอร์กับพนักงาน</h1>
+    <p class="hint">SalesLine เก็บ "ผู้สร้างออเดอร์" เป็นข้อความอิสระจากไฟล์ export — ผูกแต่ละชื่อกับพนักงานจริงที่นี่ ชื่อที่ยังไม่ผูกจะรวมเป็น "ไม่ระบุพนักงาน" ในหน้า TeleSale</p>
+</div>
+
+<details class="card add-panel">
+    <summary>➕ ผูกชื่อใหม่{% if unmapped_creators %} <span class="count-badge">{{ unmapped_creators|length }} ชื่อยังไม่ผูก</span>{% endif %}</summary>
+    <form method="post" action="{% url 'analytics:alias_create' %}" class="master-form-grid">
+        {% csrf_token %}
+        {% for field in alias_form %}
+        <label class="form-cell">
+            <span>{{ field.label }}</span>
+            {{ field }}
+            {% if field.errors %}<em class="field-error">{{ field.errors.0 }}</em>{% endif %}
+        </label>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">ผูกชื่อ</button>
+    </form>
+    <datalist id="creator-options">
+        {% for c in unmapped_creators %}<option value="{{ c }}">{% endfor %}
+    </datalist>
+</details>
+
+<div class="card table-card">
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ชื่อผู้สร้างออเดอร์ (ตามไฟล์)</th>
+                <th>พนักงาน</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in aliases %}
+            <tr id="alias-row-{{ a.pk }}">
+                <td class="mono">{{ a.raw_creator }}</td>
+                <td>{{ a.employee.name }}</td>
+                <td class="row-actions">
+                    <button class="btn-icon" title="ลบ"
+                            hx-post="{% url 'analytics:alias_delete' a.pk %}"
+                            hx-confirm="ยกเลิกการผูกชื่อ {{ a.raw_creator }} ?"
+                            hx-target="#alias-row-{{ a.pk }}" hx-swap="outerHTML">🗑️</button>
+                </td>
+            </tr>
+            {% empty %}
+                <tr><td colspan="3" class="empty-cell">ยังไม่มีการผูกชื่อ</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}
