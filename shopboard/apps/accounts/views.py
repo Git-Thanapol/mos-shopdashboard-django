@@ -37,7 +37,7 @@ def login_view(request):
     form = ThaiLoginForm(request, data=request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
-        if user.otp_enabled and user.email and not trusted_device.is_trusted(request, user):
+        if settings.OTP_LOGIN_ENABLED and user.otp_enabled and user.email and not trusted_device.is_trusted(request, user):
             request.session[OTP_SESSION_KEY] = user.pk
             request.session[OTP_BACKEND_KEY] = user.backend
             _send_otp(user)

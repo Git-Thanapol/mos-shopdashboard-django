@@ -104,6 +104,7 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Shop Dashboard <noreply@localhost>")
 
 # --- OTP / trusted-device policy ---
+OTP_LOGIN_ENABLED = env.bool("OTP_LOGIN_ENABLED", default=True)
 OTP_CODE_TTL_SECONDS = 5 * 60
 OTP_MAX_ATTEMPTS = 5
 OTP_LOCKOUT_SECONDS = 10 * 60
